@@ -1,1 +1,3 @@
 moot/
+.venv/
+__pycache__/

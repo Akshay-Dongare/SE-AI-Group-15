@@ -22,13 +22,13 @@ print("-" * 40)
 for n_pos, n_neg in RATIOS:
   cf = Confuse()
   for _ in range(n_pos):
-    # TODO: predict "pos" with prob TP_RATE, else "neg"
-    got = "???"
+    got = "pos" if random.random() < TP_RATE else "neg"
     confuse(cf, "pos", got)
   for _ in range(n_neg):
-    # TODO: predict "pos" with prob FP_RATE, else "neg"
-    got = "???"
+    got = "pos" if random.random() < FP_RATE else "neg"
     confuse(cf, "neg", got)
   summary = confused(cf, summary=True)
-  # TODO: print ratio, summary.acc, summary.pd,
-  #       summary.pf, summary.prec
+
+  ratio = f"{n_pos}/{n_neg}"
+  print(f"{ratio:>10} {summary.acc:5d} {summary.pd:5d}"
+        f" {summary.pf:5d} {summary.prec:5d}")
