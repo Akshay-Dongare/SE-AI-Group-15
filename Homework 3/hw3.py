@@ -1,11 +1,13 @@
 #!/usr/bin/env python3 -B
 """hw3.py: Welford Num vs reservoir Num"""
 import random, math, glob, statistics
-from ez import csv, Data, shuffle, Num, col
+from ez import csv, Data, shuffle, Num
 from sa import sa
 from locals import ls, lsRminus, saRplus
 from stats import top
 import ez
+
+random.seed(1)
 
 class WelfordNum(Num):
   """Welford online mean/variance. No reservoir.
@@ -23,11 +25,10 @@ class WelfordNum(Num):
     if v == "?": return v
     self.seen += 1
     self.n   += 1
-    # TODO: Welford incremental update
-    #   delta   = v - self.mu
-    #   self.mu += delta / self.n
-    #   delta2  = v - self.mu
-    #   self.m2 += delta * delta2
+    delta   = v - self.mu
+    self.mu += delta / self.n
+    delta2  = v - self.mu
+    self.m2 += delta * delta2
     return v
 
   def sub(self, v):
@@ -36,19 +37,19 @@ class WelfordNum(Num):
     if self.n <= 1:
       self.n, self.mu, self.m2 = 0, 0.0, 0.0
       return v
-    # TODO: reverse Welford
-    #   delta   = v - self.mu
-    #   self.n -= 1
-    #   self.mu -= delta / self.n
-    #   delta2  = v - self.mu
-    #   self.m2 -= delta * delta2
+    delta   = v - self.mu
+    self.n -= 1
+    self.mu -= delta / self.n
+    delta2  = v - self.mu
+    self.m2 -= delta * delta2
+    self.m2 = max(0.0, self.m2)
     return v
 
   def mid(self):
-    return 0  # TODO: return self.mu
+    return self.mu
 
   def spread(self):
-    return 0  # TODO: sqrt(m2/(n-1)) if n>1 else 0
+    return math.sqrt(self.m2/(self.n-1)) if self.n > 1 else 0
 
   def _lo(self): return self.mu - 3*self.spread()
   def _hi(self): return self.mu + 3*self.spread()
@@ -56,16 +57,14 @@ class WelfordNum(Num):
   def norm(self, v):
     if v == "?": return v
     lo, hi = self._lo(), self._hi()
-    # TODO: normalize v into 0..1 using lo, hi
-    #   return 0 if lo==hi else max(0,min(1,...))
-    return v
+    return 0 if lo == hi else max(0, min(1, (v - lo)/(hi - lo)))
 
   def pick(self, v=None):
-    # TODO: gaussian perturbation around v or mu
-    #   base = self.mu if v is None or v=="?" else v
-    #   result = random.gauss(base, self.spread())
-    #   clamp to [_lo(), _hi()]
-    return self.mu
+    base = self.mu if v is None or v == "?" else v
+    s = self.spread()
+    result = base if s == 0 else random.gauss(base, s)
+    lo, hi = self._lo(), self._hi()
+    return min(hi, max(lo, result))
 
   def distx(self, u, v):
     if u == v == "?": return 1
@@ -112,18 +111,20 @@ def run_tour(files, use_welford=False):
       rows = shuffle(d0.rows[:])[:SAMPLE]
       d1 = Data([d0.cols.names] + rows)
       for algo in ALGOS:
-        # TODO: run algo, collect final energy
-        #   for h, e, row in algo(d1): pass
-        #   seen[algo.__name__].append(int(100*e))
-        pass
+        e = None
+        for _, e, _ in algo(d1):
+          pass
+        if e is not None:
+          seen[algo.__name__].append(int(100*e))
 
-    # TODO: winners = top(seen, eps=0.35 * sd)
-    # TODO: for w in winners: wins[w] += 1
+    winners = top(seen, eps=0.35 * sd)
+    for w in winners:
+      wins[w] += 1
 
   for name in sorted(wins):
     print(f"  {name:>12} {wins[name]:>6}")
 
-def eg__compare(d:filename):
+def eg__compare(d:str):
   "parametric vs non-parametric tournament"
   files = glob.glob(d + "/*/*.csv")
   print(f"found {len(files)} csv files")
