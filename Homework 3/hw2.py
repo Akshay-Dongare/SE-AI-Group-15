@@ -10,7 +10,7 @@ ALGOS   = [sa, ls, lsRminus, saRplus]
 REPEATS = 20
 SAMPLE  = 50
 
-def eg__tour(d:filename):
+def eg__tour(d:str):
   "run tournament on moot/optimize/*/*.csv"
   files = glob.glob(d + "/*/*.csv")
   print(f"found {len(files)} csv files")
@@ -38,13 +38,15 @@ def eg__tour(d:filename):
       rows = shuffle(d0.rows[:])[:SAMPLE]
       d1   = Data([d0.cols.names] + rows)
       for algo in ALGOS:
-        # TODO: run algo(d1), iterate to final e
-        #   for h, e, row in algo(d1): pass
-        #   seen[algo.__name__].append(int(100*e))
-        pass
+        e = None
+        for h, e, row in algo(d1):
+          pass
+        if e is not None:
+          seen[algo.__name__].append(int(100*e))
 
-    # TODO: winners = top(seen, eps=0.35 * sd)
-    # TODO: for w in winners: wins[w] += 1
+    winners = top(seen, eps=0.35 * sd)
+    for w in winners:
+      wins[w] += 1
 
   print(f"\n{'algo':>12} {'wins':>6}")
   print("-" * 25)
