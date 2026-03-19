@@ -1,10 +1,12 @@
 #!/usr/bin/env python3 -B
 """hw2.py: tournament across MOOT data sets"""
-import random, glob, statistics, traceback
+import random, glob, statistics
 from ez import csv, Data, shuffle, main, filename
 from sa import sa
 from locals import ls, lsRminus, saRplus
 from stats import top
+
+random.seed(1)
 
 ALGOS   = [sa, ls, lsRminus, saRplus]
 REPEATS = 20
@@ -39,8 +41,8 @@ def eg__tour(d:str):
       d1   = Data([d0.cols.names] + rows)
       for algo in ALGOS:
         e = None
-        for h, e, row in algo(d1):
-          pass
+        for out in algo(d1):
+          e = out[1]
         if e is not None:
           seen[algo.__name__].append(int(100*e))
 
