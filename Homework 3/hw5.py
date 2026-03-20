@@ -23,7 +23,8 @@ def eg__sample(d:str):
   wins = {t: 0 for t in treatments}
   algo_by_name = {a.__name__: a for a in ALGOS}
 
-  for f in sorted(files):
+  for i, f in enumerate(sorted(files), 1):
+    print(f"[{i}/{len(files)}] Processing {f} ...")
     try:
       d0 = Data(csv(f))
       if len(d0.rows) < max(SAMPLES): continue
