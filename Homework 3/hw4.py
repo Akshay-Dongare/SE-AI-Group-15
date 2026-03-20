@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -B
 """hw4.py: hyperparameter sensitivity (grad only)"""
 import random, glob, statistics
-from ez import csv, Data, shuffle, main, filename
+from ez import csv, Data, shuffle, main
 from sa import sa
 from locals import ls
 from stats import top
