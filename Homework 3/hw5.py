@@ -59,9 +59,15 @@ def eg__sample(d:str):
     for w in winners:
       wins[w] += 1
 
-  print(f"\n{'treatment':>20} {'wins':>6}")
-  print("-" * 30)
+  # --- PRINT AND SAVE RESULTS ---
+  result_text = f"\n{'treatment':>20} {'wins':>6}\n" + "-" * 30 + "\n"
   for t in sorted(wins, key=lambda t: -wins[t]):
-    print(f"{str(t):>20} {wins[t]:>6}")
+    result_text += f"{str(t):>20} {wins[t]:>6}\n"
+
+  print(result_text)
+
+  with open("hw5_final_results.txt", "w") as f:
+    f.write(result_text)
+  print("\n*** Results safely written to hw5_final_results.txt ***")
 
 if __name__ == "__main__": main(globals())
