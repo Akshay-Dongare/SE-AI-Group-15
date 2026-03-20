@@ -1,16 +1,18 @@
 #!/usr/bin/env python3 -B
 """hw5.py: sample size sensitivity (grad only)"""
 import random, glob, statistics
-from ez import csv, Data, shuffle, main, filename
+from ez import csv, Data, shuffle, main
 from sa import sa
 from locals import ls, lsRminus, saRplus
 from stats import top
+
+random.seed(1)
 
 ALGOS   = [sa, ls, lsRminus, saRplus]
 SAMPLES = [30, 50, 100, 200]
 REPEATS = 20
 
-def eg__sample(d:filename):
+def eg__sample(d:str):
   "sample size sensitivity across MOOT"
   files = glob.glob(d + "/*/*.csv")
   print(f"found {len(files)} csv files")
@@ -44,19 +46,17 @@ def eg__sample(d:filename):
         rows = shuffle(d0.rows[:])[:n]
         d1   = Data([d0.cols.names] + rows)
         algo = algo_by_name[name]
-        # TODO: run algo(d1) to get final energy
-        #   for h, e, row in algo(d1): pass
-        #   seen[(name, n)].append(int(100*e))
-        pass
+        e = None
+        for _, e, _ in algo(d1):
+          pass
+        if e is not None:
+          seen[(name, n)].append(int(100*e))
 
-    # TODO: winners = top(seen, eps=0.35 * sd)
-    #
-    # tiebreak: prefer smallest sample
-    # TODO:
-    #   best_n  = min(n for (_,n) in winners)
-    #   winners = {w for w in winners if w[1]==best_n}
-    #
-    # TODO: for w in winners: wins[w] += 1
+    winners = top(seen, eps=0.35 * sd)
+    best_n  = min(n for (_, n) in winners)
+    winners = {w for w in winners if w[1] == best_n}
+    for w in winners:
+      wins[w] += 1
 
   print(f"\n{'treatment':>20} {'wins':>6}")
   print("-" * 30)
