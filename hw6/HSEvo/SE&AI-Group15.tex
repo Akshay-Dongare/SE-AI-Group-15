@@ -132,7 +132,7 @@ Our experiments were conducted on a macOS environment using Python 3.11. The evo
 To validate our approach, we employed the average normalized distance to the global ideal Pareto point. This measure is highly rigorous for this context because it directly captures the geometric distance of a candidate configuration to the theoretical optimum across all objectives simultaneously. Unlike hypervolume, which heavily depends on the choice of a reference point and can be skewed by outliers, distance-to-ideal provides a stable, easily interpretable convergence metric for heavily constrained optimization budgets.
 
 \subsection{What Was Seen}
-We evaluated the HSEvo framework across the selected MOOT tasks. Results indicate that LLM-guided evolutionary approaches are capable of generating active-learning heuristics that perform favorably. Table~\ref{tab:moot-results} summarizes the performance of the discovered heuristics. The HSEvo-evolved heuristic achieved a mean average distance of 0.281 ($\pm$ 0.042 across 3 independent runs), demonstrating that the LLM successfully identified a robust search algorithm capable of balancing exploitation of known good configurations and exploration of unmapped regions. This significantly outperformed both a random baseline and a standard greedy acquisition heuristic.
+We evaluated the HSEvo framework across the selected MOOT tasks. Results indicate that LLM-guided evolutionary approaches are capable of generating active-learning heuristics that perform favorably. Table~\ref{tab:moot-results} summarizes the performance of the discovered heuristics. The HSEvo-evolved heuristic achieved an average distance of 0.281, demonstrating that the LLM successfully identified a robust search algorithm capable of balancing exploitation of known good configurations and exploration of unmapped regions.
 
 \begin{table}[h]
 \caption{Performance of Evolutionary LLM Frameworks on MOOT datasets (SS-B and auto93). Lower score is better.}
@@ -142,8 +142,7 @@ We evaluated the HSEvo framework across the selected MOOT tasks. Results indicat
 \textbf{Framework} & \textbf{Algorithm Type} & \textbf{Avg Distance to Ideal} \\
 \midrule
 Random Baseline & Static & 0.856 \\
-Greedy Baseline & Hand-crafted & 0.512 \\
-HSEvo ($n=3$) & Evolved LLM Heuristic & \textbf{0.281 $\pm$ 0.042} \\
+HSEvo & Evolved LLM Heuristic & \textbf{0.281} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -169,7 +168,7 @@ Future work should explore scaling these methods to larger population sizes, uti
 
 \section{Threats to Validity}
 
-\textbf{Internal Validity:} Our primary threat to internal validity is the heavily constrained evaluation budget. With a population size of 2 and a maximum of 4 function evaluations, the evolutionary search behaves more like local sampling than true population-based evolution. Our results represent early-stage generation capabilities rather than the global optimum of LLM heuristics. Additionally, the stochastic nature of LLMs introduces variance, which we mitigated by averaging across 3 independent runs.
+\textbf{Internal Validity:} Our primary threat to internal validity is the heavily constrained evaluation budget. With a population size of 2 and a maximum of 4 function evaluations, the evolutionary search behaves more like local sampling than true population-based evolution. Our results represent early-stage generation capabilities rather than the global optimum of LLM heuristics. Additionally, the stochastic nature of LLMs introduces variance.
 
 \textbf{External Validity:} We evaluated our framework on two specific MOOT tasks (\texttt{SS-B} and \texttt{auto93}). While representative of real SE configuration and hardware tuning, they represent only a fraction of the 120+ datasets available. Performance may vary on tasks with significantly higher dimensional spaces or noisier objectives.
 
