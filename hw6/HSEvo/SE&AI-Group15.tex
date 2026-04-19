@@ -123,6 +123,15 @@ We adapt evolutionary LLM frameworks to operate as active-learning optimizers ov
 
 To analyze the efficacy of our methodology, we record the generational distance of each selected configuration over time. The appropriateness of the LLM-generated heuristic is validated if the average normalized distance to the ideal Pareto point strictly decreases, indicating that the LLM has learned a functional search gradient rather than randomly sampling the configuration space.
 
+\subsection{Baselines}
+
+We compare against two static baselines that require no LLM calls:
+\begin{itemize}
+\item \textbf{Random Baseline:} Configurations are selected uniformly at random from the unevaluated pool at each step.
+\item \textbf{Greedy Baseline:} At each step, the unevaluated configuration with the best (lowest normalized) value on the \emph{first} objective column is selected. This represents a simple single-objective greedy heuristic that ignores all other objectives.
+\end{itemize}
+Both baselines use the same initialization (2 random seed points) and budget (10 active-learning steps) as HSEvo to ensure a fair comparison.
+
 \section{Results}
 
 \subsection{Experimental Rig}
