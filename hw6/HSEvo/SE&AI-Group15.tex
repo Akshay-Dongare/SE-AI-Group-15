@@ -31,7 +31,7 @@ Modern software engineering is characterized by complex systems composed of inte
 
 Hand-crafted coordination logic is often poorly documented, difficult to scale, and prone to subtle interactions. As systems grow in complexity, manual tuning becomes infeasible and unreliable. Therefore, static coordination algorithms become a liability without adaptive tool support.
 
-Recent work has explored the use of large language models (LLMs) for optimization tasks. However, most approaches focus on generating solutions or tuning parameters rather than evolving the underlying algorithms themselves. This paper explores whether LLMs embedded within evolutionary frameworks can generate and optimize coordination strategies across real-world software engineering optimization tasks.
+Recent work has explored the use of large language models (LLMs) for optimization tasks \cite{romera2023mathematical}. However, most approaches focus on generating solutions or tuning parameters rather than evolving the underlying algorithms themselves. This paper explores whether LLMs embedded within evolutionary frameworks can generate and optimize coordination strategies across real-world software engineering optimization tasks.
 
 To ensure realism and generalizability, we evaluate our approach using the MOOT (Multi-Objective Optimization Tasks) repository, which provides a diverse set of multi-objective optimization problems derived from software engineering contexts.
 
@@ -53,7 +53,7 @@ This paper makes the following contributions:
 
 Software systems increasingly rely on dynamic coordination across distributed components. Examples include microservices routing, load balancing, and multi-agent orchestration. Designing optimal coordination logic in such systems is difficult due to combinatorial complexity and dynamic environments.
 
-We initially validated our framework on a proxy task: the Online Bin Packing Problem (BPP). Using three evolutionary frameworks (HSEvo, ReEvo, and EoH), our evolutionary LLMs learned to generate bin-scoring heuristics (\texttt{priority(item, bins\_remain\_cap)}). The frameworks successfully discovered heuristics achieving performance near the theoretical lower bounds (e.g., ReEvo at $\sim$5.22\% excess and EoH at $\sim$4.22\% excess), outperforming static baseline heuristics. While BPP demonstrated the feasibility of evolving coordination logic, it is primarily a theoretical toy problem. To address this, we transition our methodology to realistic system configuration tasks from MOOT.
+We initially validated our framework on a proxy task: the Online Bin Packing Problem (BPP). Using three evolutionary frameworks (HSEvo, ReEvo \cite{reevo2024}, and EoH \cite{eoh2024}), our evolutionary LLMs learned to generate bin-scoring heuristics (\texttt{priority(item, bins\_remain\_cap)}). The frameworks successfully discovered heuristics achieving performance near the theoretical lower bounds (e.g., ReEvo at $\sim$5.22\% excess and EoH at $\sim$4.22\% excess), outperforming static baseline heuristics. While BPP demonstrated the feasibility of evolving coordination logic, it is primarily a theoretical toy problem. To address this, we transition our methodology to realistic system configuration tasks from MOOT \cite{menzies2024moot}.
 
 \section{Related Work and Literature Gap}
 
@@ -107,6 +107,10 @@ We adapt evolutionary LLM frameworks to operate as active-learning optimizers ov
 \item \textbf{Evaluation}: We iteratively select the top-scoring configuration to reveal its objective values.
 \item \textbf{Evolution}: The quality of the final discovered Pareto front acts as the fitness score for the LLM-generated heuristic, guiding subsequent mutations and crossovers.
 \end{enumerate}
+
+\subsection{Data Analysis}
+
+To analyze the efficacy of our methodology, we record the generational distance of each selected configuration over time. The appropriateness of the LLM-generated heuristic is validated if the average normalized distance to the ideal Pareto point strictly decreases, indicating that the LLM has learned a functional search gradient rather than randomly sampling the configuration space.
 
 \section{Results}
 
