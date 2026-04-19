@@ -67,11 +67,11 @@ We identified a high-citation outlier that skewed the distribution, and after ad
 
 These papers were categorized into five themes (Figure~\ref{fig:venn}):
 \begin{enumerate}
-\item \textbf{Direct LLM Optimization}: Studies exploring zero-shot or few-shot prompting to directly output optimal solutions for scheduling or routing problems.
-\item \textbf{Evolutionary + LLM}: Frameworks that treat LLMs as mutation or crossover operators within genetic algorithms to refine candidate solutions.
-\item \textbf{Prompt Optimization}: Techniques for automatically tuning prompt templates or instructions to maximize LLM performance on downstream software tasks.
-\item \textbf{Algorithm Generation}: Methods focusing on writing executable code or heuristic functions, such as FunSearch \cite{romera2023mathematical}, rather than static answers.
-\item \textbf{System Optimization}: Traditional approaches for tuning configuration parameters in cloud architectures and microservices.
+\item \textbf{Direct LLM Optimization}: Studies exploring zero-shot or few-shot prompting to directly output optimal solutions for scheduling or resource allocation problems. Representative work includes Liu et al.~\cite{liu2024evolutionary}, who frame LLMs as evolutionary optimizers; Liu et al.~\cite{liu2025multiobjective}, who extend this to multi-objective settings; and Li et al.~\cite{li2025uav}, who apply LLM-based optimization to UAV communication networks.
+\item \textbf{Evolutionary + LLM}: Frameworks that treat LLMs as mutation or crossover operators within genetic algorithms to refine candidate solutions. Wu et al.~\cite{wu2024survey} provide a comprehensive survey of this intersection. Specific techniques include language-model crossover via few-shot prompting~\cite{meyerson2024crossover}, LLM-guided evolution~\cite{morris2024guided}, EvoPrompting for neural architecture search~\cite{chen2023evoprompting}, and EvoFlow for evolving agentic workflows~\cite{zhang2025evoflow}.
+\item \textbf{Prompt Optimization}: Techniques for automatically tuning prompt templates or instructions to maximize LLM performance on downstream software tasks. Foundational work by Zhou et al.~\cite{zhou2022ape} (APE) demonstrated human-level prompt engineering. Subsequent work includes classifier-guided prompt evolution~\cite{wong2023prompt}, reflective prompt evolution (GEPA)~\cite{agrawal2025gepa}, and gradient-analogy prompt optimization~\cite{tang2025prompt}.
+\item \textbf{Algorithm Generation}: Methods focusing on writing executable code or heuristic functions rather than static answers. FunSearch~\cite{romera2023mathematical} pioneered LLM-driven program search for mathematical discovery. Liu et al.~\cite{liu2023ael} proposed Algorithm Evolution using LLMs, Ma et al.~\cite{ma2026llamoco} introduced LLaMoCo for optimization code generation, and Ma et al.~\cite{ma2025survey} surveyed the broader meta-black-box-optimization landscape.
+\item \textbf{System Optimization}: Traditional approaches for tuning configuration parameters in cloud architectures and microservices, as represented by the MOOT benchmark~\cite{menzies2024moot}.
 \end{enumerate}
 
 \begin{figure}[h]
@@ -135,7 +135,7 @@ Both baselines use the same initialization (2 random seed points) and budget (10
 \section{Results}
 
 \subsection{Experimental Rig}
-Our experiments were conducted on a macOS environment using Python 3.11. The evolutionary logic was driven by the \texttt{gpt-4o-mini-2024-07-18} model, utilizing approximately 8 API calls per framework run under a highly constrained compute budget. The framework was configured with a population size of 2 and a maximum of 4 candidate heuristic evaluations per evolutionary run. Each candidate heuristic was scored by executing 10 active-learning configuration selection steps on the MOOT dataset. Prompts used zero-shot generation at a temperature of 0.7 to balance deterministic coding with creative exploration.
+Our experiments were conducted on a macOS environment using Python 3.11. The evolutionary logic was driven by HSEvo~\cite{dat2025hsevo} using the \texttt{gpt-4o-mini-2024-07-18} model, utilizing approximately 8 API calls per framework run under a highly constrained compute budget. The framework was configured with a population size of 2 and a maximum of 4 candidate heuristic evaluations per evolutionary run. Each candidate heuristic was scored by executing 10 active-learning configuration selection steps on the MOOT dataset. Prompts used zero-shot generation at a temperature of 0.7 to balance deterministic coding with creative exploration.
 
 \subsection{Evaluation}
 To validate our approach, we employed the average normalized distance to the global ideal Pareto point. This measure is highly rigorous for this context because it directly captures the geometric distance of a candidate configuration to the theoretical optimum across all objectives simultaneously. Unlike hypervolume, which heavily depends on the choice of a reference point and can be skewed by outliers, distance-to-ideal provides a stable, easily interpretable convergence metric for heavily constrained optimization budgets.
