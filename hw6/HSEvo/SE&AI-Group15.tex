@@ -53,22 +53,31 @@ This paper makes the following contributions:
 
 Software systems increasingly rely on dynamic coordination across distributed components. Examples include microservices routing, load balancing, and multi-agent orchestration. Designing optimal coordination logic in such systems is difficult due to combinatorial complexity and dynamic environments.
 
+To ensure realistic evaluation, we target tasks from the MOOT repository. The MOOT data is derived from heavily-cited software engineering research published at top-tier venues (e.g., ICSE, ASE, TSE). These datasets represent real-world software configuration and system tuning scenarios, grounding our framework in practical problems rather than theoretical constructs.
+
 We initially validated our framework on a proxy task: the Online Bin Packing Problem (BPP). Using three evolutionary frameworks (HSEvo, ReEvo \cite{reevo2024}, and EoH \cite{eoh2024}), our evolutionary LLMs learned to generate bin-scoring heuristics (\texttt{priority(item, bins\_remain\_cap)}). The frameworks successfully discovered heuristics achieving performance near the theoretical lower bounds (e.g., ReEvo at $\sim$5.22\% excess and EoH at $\sim$4.22\% excess), outperforming static baseline heuristics. While BPP demonstrated the feasibility of evolving coordination logic, it is primarily a theoretical toy problem. To address this, we transition our methodology to realistic system configuration tasks from MOOT \cite{menzies2024moot}.
 
-\section{Related Work and Literature Gap}
+\subsection{Related Work and Literature Gap}
 
 We conducted a structured literature review using Google Scholar queries focused on prompt optimization, evolutionary search, and multi-objective optimization. Papers were ranked by citation count, and the knee of the citation curve was used to identify influential works.
 
 We identified a high-citation outlier that skewed the distribution, and after adjustment, selected 18 key papers above the knee.
 
-These papers were categorized into five themes:
+These papers were categorized into five themes (Figure~\ref{fig:venn}):
 \begin{enumerate}
-\item Direct LLM Optimization
-\item Evolutionary + LLM
-\item Prompt Optimization
-\item Algorithm Generation
-\item System Optimization
+\item \textbf{Direct LLM Optimization}: Studies exploring zero-shot or few-shot prompting to directly output optimal solutions for scheduling or routing problems.
+\item \textbf{Evolutionary + LLM}: Frameworks that treat LLMs as mutation or crossover operators within genetic algorithms to refine candidate solutions.
+\item \textbf{Prompt Optimization}: Techniques for automatically tuning prompt templates or instructions to maximize LLM performance on downstream software tasks.
+\item \textbf{Algorithm Generation}: Methods focusing on writing executable code or heuristic functions, such as FunSearch \cite{romera2023mathematical}, rather than static answers.
+\item \textbf{System Optimization}: Traditional approaches for tuning configuration parameters in cloud architectures and microservices.
 \end{enumerate}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{Venn_Diagram_for_White_Space.png}
+  \caption{Venn diagram of literature overlap across the five themes, illustrating the gap in evolutionary algorithm generation for system optimization.}
+  \label{fig:venn}
+\end{figure}
 
 Analysis revealed a significant gap at the intersection of evolutionary optimization, algorithm generation, and system-level optimization. While prior work explores subsets of these themes, no foundational work combines all three. This paper targets that unexplored region.
 
