@@ -61,17 +61,53 @@ Prior to MOOT evaluation, we verified the framework pipeline on a synthetic benc
 
 \subsection{Related Work and Literature Gap}
 
-We conducted a structured literature review using Google Scholar queries focused on prompt optimization, evolutionary search, and multi-objective optimization. Papers were ranked by citation count, and the knee of the citation curve was used to identify influential works.
+Having defined the optimization task, the literature was searched to map the current state-of-the-art in LLM-driven software engineering optimization. We used the Harzing's Publish or Perish tool to retrieve the top 200 papers from Google Scholar, selecting the top 100 by citation count, using the query:
 
-We identified a high-citation outlier that skewed the distribution, and after adjustment, selected 18 key papers above the knee.
+\begin{quote}
+\texttt{(``prompt engineering'' OR ``prompt optimization'') AND (``multi-objective'' OR Pareto) AND (``configuration'' OR ``hyperparameter'' OR ``evolutionary'')}
+\end{quote}
+
+Papers were ranked by citation count and the ``knee'' of the citation curve was identified---the point furthest from a line connecting the first and last points in the ranked list---a standard heuristic in bibliometric analysis that marks where citation accumulation significantly decreases~\cite{menzies2024moot}.
+
+One paper had a citation count so far above the rest (1,710 citations) that it acted as an extreme outlier, compressing the rest of the curve and reducing the knee to only 5 papers. We therefore computed the knee both with and without this outlier. Excluding the outlier yielded 17 papers above the knee; re-including it gave our final set of 18 key papers. Table~\ref{tab:knee-papers} lists all 18 papers.
+
+\begin{table}[h]
+\caption{Papers above the knee of the citation curve. These 18 papers formed the basis of our literature gap analysis.}
+\label{tab:knee-papers}
+\small
+\begin{tabular}{rp{5.5cm}r}
+\toprule
+\textbf{Cites} & \textbf{Title (Authors)} & \textbf{Year} \\
+\midrule
+1710 & Large language models are human-level prompt engineers (Zhou et al.) & 2022 \\
+237  & Large language models as evolutionary optimizers (Liu et al.) & 2024 \\
+192  & Evolutionary computation in the era of LLM: Survey (Wu et al.) & 2024 \\
+179  & EvoPrompting: LMs for code-level NAS (Chen et al.) & 2023 \\
+141  & Language model crossover (Meyerson et al.) & 2024 \\
+112  & GEPA: Reflective prompt evolution (Agrawal et al.) & 2025 \\
+110  & Algorithm evolution using LLM (Liu et al.) & 2023 \\
+100  & LLM for multiobjective evolutionary optimization (Liu et al.) & 2025 \\
+61   & Multi-agent design: Optimizing agents (Zhou et al.) & 2025 \\
+60   & Prompt optimization in LLMs (Sabbatella et al.) & 2024 \\
+59   & LLM-based multi-objective optimization for UAV (Li et al.) & 2025 \\
+57   & LLaMoCo: Instruction tuning for optimization code (Ma et al.) & 2026 \\
+52   & Toward automated algorithm design (Ma et al.) & 2025 \\
+49   & Prompt evolution for generative AI (Wong et al.) & 2023 \\
+49   & HSEvo: Heuristic design with LLMs (Dat et al.) & 2025 \\
+46   & LLM guided evolution (Morris et al.) & 2024 \\
+45   & EvoFlow: Evolving agentic workflows (Zhang et al.) & 2025 \\
+37   & LLMs as prompt optimizers (Tang et al.) & 2025 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 These papers were categorized into five themes (Figure~\ref{fig:venn}):
 \begin{enumerate}
-\item \textbf{Direct LLM Optimization}: Studies exploring zero-shot or few-shot prompting to directly output optimal solutions for scheduling or resource allocation problems. Representative work includes Liu et al.~\cite{liu2024evolutionary}, who frame LLMs as evolutionary optimizers; Liu et al.~\cite{liu2025multiobjective}, who extend this to multi-objective settings; and Li et al.~\cite{li2025uav}, who apply LLM-based optimization to UAV communication networks.
-\item \textbf{Evolutionary + LLM}: Frameworks that treat LLMs as mutation or crossover operators within genetic algorithms to refine candidate solutions. Wu et al.~\cite{wu2024survey} provide a comprehensive survey of this intersection. Specific techniques include language-model crossover via few-shot prompting~\cite{meyerson2024crossover}, LLM-guided evolution~\cite{morris2024guided}, EvoPrompting for neural architecture search~\cite{chen2023evoprompting}, and EvoFlow for evolving agentic workflows~\cite{zhang2025evoflow}.
-\item \textbf{Prompt Optimization}: Techniques for automatically tuning prompt templates or instructions to maximize LLM performance on downstream software tasks. Foundational work by Zhou et al.~\cite{zhou2022ape} (APE) demonstrated human-level prompt engineering. Subsequent work includes classifier-guided prompt evolution~\cite{wong2023prompt}, reflective prompt evolution (GEPA)~\cite{agrawal2025gepa}, and gradient-analogy prompt optimization~\cite{tang2025prompt}.
-\item \textbf{Algorithm Generation}: Methods focusing on writing executable code or heuristic functions rather than static answers. FunSearch~\cite{romera2023mathematical} pioneered LLM-driven program search for mathematical discovery. Liu et al.~\cite{liu2023ael} proposed Algorithm Evolution using LLMs, Ma et al.~\cite{ma2026llamoco} introduced LLaMoCo for optimization code generation, and Ma et al.~\cite{ma2025survey} surveyed the broader meta-black-box-optimization landscape.
-\item \textbf{System Optimization}: Traditional approaches for tuning configuration parameters in cloud architectures and microservices, as represented by the MOOT benchmark~\cite{menzies2024moot}.
+\item \textbf{Direct LLM Optimization}: The LLM directly generates or improves solutions and configurations without a population-based evolutionary framework. Representative work includes Liu et al.~\cite{liu2024evolutionary}, who frame LLMs as evolutionary optimizers; Liu et al.~\cite{liu2025multiobjective}, who extend this to multi-objective settings; and Li et al.~\cite{li2025uav}, who apply LLM-based optimization to UAV communication networks.
+\item \textbf{Evolutionary + LLM}: The LLM is embedded inside an evolutionary algorithm or population-based search, acting as a mutation, crossover, or selection operator. Wu et al.~\cite{wu2024survey} provide a comprehensive survey of this intersection. Specific techniques include language-model crossover via few-shot prompting~\cite{meyerson2024crossover}, LLM-guided evolution~\cite{morris2024guided}, EvoPrompting for neural architecture search~\cite{chen2023evoprompting}, and EvoFlow for evolving agentic workflows~\cite{zhang2025evoflow}.
+\item \textbf{Prompt Optimization}: Prompts themselves are treated as the primary optimization variables; search methods are applied to find better prompt templates. Foundational work by Zhou et al.~\cite{zhou2022ape} (APE) demonstrated human-level prompt engineering. Subsequent work includes classifier-guided prompt evolution~\cite{wong2023prompt}, reflective prompt evolution (GEPA)~\cite{agrawal2025gepa}, and gradient-analogy prompt optimization~\cite{tang2025prompt}.
+\item \textbf{Algorithm Generation}: The LLM is tasked with generating executable code for optimization heuristics or algorithms, such as FunSearch~\cite{romera2023mathematical}, rather than producing static answers. Liu et al.~\cite{liu2023ael} proposed Algorithm Evolution using LLMs, Ma et al.~\cite{ma2026llamoco} introduced LLaMoCo for optimization code generation, and Ma et al.~\cite{ma2025survey} surveyed the broader meta-black-box-optimization landscape.
+\item \textbf{System Optimization}: The optimization target is an entire system architecture---such as a multi-agent workflow or cloud microservice environment---rather than a single parameter or prompt, as represented by the MOOT benchmark~\cite{menzies2024moot}.
 \end{enumerate}
 
 \begin{figure}[h]
@@ -81,7 +117,7 @@ These papers were categorized into five themes (Figure~\ref{fig:venn}):
   \label{fig:venn}
 \end{figure}
 
-Analysis revealed a significant gap at the intersection of evolutionary optimization, algorithm generation, and system-level optimization. While prior work explores subsets of these themes, no foundational work combines all three. This paper targets that unexplored region.
+Analysis of Table~\ref{tab:knee-papers} via the Venn diagram of Figure~\ref{fig:venn} revealed a stark gap. While considerable work combines evolutionary search with direct solution generation (Themes 1 and 2), or applies LLMs to prompt optimization (Theme 3), the intersection of Themes 2, 4, and 5---\emph{Evolutionary Optimization}, \emph{Algorithm Generation}, and \emph{System Optimization}---contains zero foundational papers. Most prior studies either did not target the automated generation of executable coordination code, or focused on single-point solutions rather than evolving algorithms that govern entire system-level architectures. This paper directly targets that unexplored white space.
 
 \section{Methods}
 
