@@ -92,9 +92,8 @@ if __name__ == "__main__":
     except:
         mood = 'val'
         
-    desktop = os.path.expanduser("~/Desktop")
-    dataset1 = os.path.join(desktop, "moot", "optimize", "config", "SS-B.csv")
-    dataset2 = os.path.join(desktop, "moot", "optimize", "misc", "auto93.csv")
+    dataset1 = os.path.join(os.path.dirname(__file__), "..", "..", "datasets", "SS-B.csv")
+    dataset2 = os.path.join(os.path.dirname(__file__), "..", "..", "datasets", "auto93.csv")
     
     datasets = [dataset1, dataset2]
     
