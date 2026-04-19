@@ -1,0 +1,23 @@
+import numpy as np
+
+def priority_v1(candidate_x: np.ndarray, evaluated_x: np.ndarray, evaluated_y: np.ndarray) -> np.ndarray:
+    """Returns a priority score for each candidate configuration.
+
+    Args:
+        candidate_x: Array of shape (N, D) containing features for unevaluated candidates.
+        evaluated_x: Array of shape (M, D) containing features for already evaluated candidates.
+        evaluated_y: Array of shape (M, K) containing objective values for already evaluated candidates. All objectives are to be minimized.
+
+    Return:
+        Array of shape (N,) containing the priority score for each candidate.
+    """
+    # A simple baseline: score candidates by exploring regions far from already evaluated points
+    import numpy as np
+    from scipy.spatial.distance import cdist
+    
+    if evaluated_x.shape[0] == 0:
+        return np.random.rand(candidate_x.shape[0])
+        
+    distances = cdist(candidate_x, evaluated_x)
+    min_distances = np.min(distances, axis=1)
+    return min_distances

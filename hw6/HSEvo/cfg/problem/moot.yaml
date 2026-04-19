@@ -1,0 +1,6 @@
+problem_name: moot
+problem_type: online
+obj_type: min
+problem_size: -1
+func_name: priority
+description: Solving multi-objective optimization tasks (MOOT) via evolutionary algorithm. The algorithm must design a search/selection heuristic to score candidate configurations for evaluation to approximate the Pareto front.
