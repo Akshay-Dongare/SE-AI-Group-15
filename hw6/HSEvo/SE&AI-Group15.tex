@@ -20,7 +20,7 @@
 \begin{document}
 
 \begin{abstract}
-Modern software systems rely on complex coordination logic across interacting components, yet such logic is often manually designed, brittle, and difficult to optimize. This paper explores whether large language models (LLMs), embedded within evolutionary frameworks, can automatically generate and improve active-learning configuration heuristics for system-level architectures. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate multiple evolutionary LLM frameworks on both a proxy task (online bin packing) and the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, outperforming a static baseline in certain settings. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
+Modern software systems rely on complex coordination logic across interacting components, yet such logic is often manually designed, brittle, and difficult to optimize. This paper explores whether large language models (LLMs), embedded within evolutionary frameworks, can automatically generate and improve active-learning configuration heuristics for system-level architectures. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate the HSEvo evolutionary LLM framework on the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, outperforming static baselines on the MOOT benchmark. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
 \end{abstract}
 
 \maketitle
@@ -46,7 +46,7 @@ To ensure realism and generalizability, we evaluate our approach using the MOOT 
 This paper makes the following contributions:
 \begin{itemize}
 \item Proposes a framework using evolutionary LLMs to generate coordination algorithms for system-level architectures.
-\item Provides an empirical comparison between LLM-generated algorithms and static heuristic baselines using both BPP and real-world MOOT tasks.
+\item Provides an empirical comparison between LLM-generated algorithms and static heuristic baselines using five real-world MOOT datasets from the MOOT benchmark suite, with two static baselines for comparison.
 \item Identifies a gap in the literature at the intersection of evolutionary optimization, algorithm generation, and system-level design.
 \item Provides a reproducible experimental setup for evaluating evolutionary LLM approaches.
 \end{itemize}
@@ -57,7 +57,7 @@ Software systems increasingly rely on dynamic coordination across distributed co
 
 To ensure realistic evaluation, we target tasks from the MOOT repository. The MOOT data is derived from heavily-cited software engineering research published at top-tier venues (e.g., ICSE, ASE, TSE). These datasets represent real-world software configuration and system tuning scenarios, grounding our framework in practical problems rather than theoretical constructs.
 
-We initially validated our framework on a proxy task: the Online Bin Packing Problem (BPP). Using three evolutionary frameworks (HSEvo, ReEvo \cite{reevo2024}, and EoH \cite{eoh2024}), our evolutionary LLMs learned to generate bin-scoring heuristics (\texttt{priority(item, bins\_remain\_cap)}). The frameworks successfully discovered heuristics achieving performance near the theoretical lower bounds (e.g., ReEvo at $\sim$5.22\% excess and EoH at $\sim$4.22\% excess), outperforming static baseline heuristics. While BPP demonstrated the feasibility of evolving coordination logic, it is primarily a theoretical toy problem. To address this, we transition our methodology to realistic system configuration tasks from MOOT \cite{menzies2024moot}.
+We initially validated framework feasibility on the Online Bin Packing Problem (BPP), where all three frameworks (HSEvo, ReEvo \cite{reevo2024}, and EoH \cite{eoh2024}) successfully evolved scoring heuristics outperforming static baselines; however, BPP is a theoretical toy problem and all reported results in this paper use real-world MOOT tasks \cite{menzies2024moot}.
 
 \subsection{Related Work and Literature Gap}
 
@@ -107,7 +107,7 @@ Due to computational and API budget constraints, we selected a subset of MOOT ta
 \item Represent diverse optimization scenarios.
 \item Allow integration with external optimization methods.
 \end{itemize}
-Specifically, we selected \texttt{SS-B.csv} (software configuration) and \texttt{auto93.csv} (hyperparameter/system design proxy) to represent our evaluation suite. 
+Specifically, we selected five datasets spanning three MOOT categories: \texttt{SS-B} and \texttt{SS-D} (Storm stream-processing configuration), \texttt{Apache} (web server configuration), \texttt{auto93} (automobile design), and \texttt{pom3d} (software process simulation). These cover configuration tuning, system design, and process optimization scenarios.
 
 \subsection{Methodology}
 
@@ -132,29 +132,34 @@ Our experiments were conducted on a macOS environment using Python 3.11. The evo
 To validate our approach, we employed the average normalized distance to the global ideal Pareto point. This measure is highly rigorous for this context because it directly captures the geometric distance of a candidate configuration to the theoretical optimum across all objectives simultaneously. Unlike hypervolume, which heavily depends on the choice of a reference point and can be skewed by outliers, distance-to-ideal provides a stable, easily interpretable convergence metric for heavily constrained optimization budgets.
 
 \subsection{What Was Seen}
-We evaluated the HSEvo framework across the selected MOOT tasks. Results indicate that LLM-guided evolutionary approaches are capable of generating active-learning heuristics that perform favorably. Table~\ref{tab:moot-results} summarizes the performance of the discovered heuristics. The HSEvo-evolved heuristic achieved an average distance of 0.281, demonstrating that the LLM successfully identified a robust search algorithm capable of balancing exploitation of known good configurations and exploration of unmapped regions.
+We evaluated the HSEvo framework across all five MOOT datasets. Table~\ref{tab:moot-results} summarizes the performance of the discovered heuristics compared to both a random baseline and a greedy single-objective baseline.
 
 \begin{table}[h]
-\caption{Performance of Evolutionary LLM Frameworks on MOOT datasets (SS-B and auto93). Lower score is better.}
+\caption{Performance across five MOOT datasets. Avg normalized distance to global ideal Pareto point --- lower is better. Greedy baseline selects the configuration with the best value on the primary objective at each step.}
 \label{tab:moot-results}
-\begin{tabular}{llc}
+\begin{tabular}{lccc}
 \toprule
-\textbf{Framework} & \textbf{Algorithm Type} & \textbf{Avg Distance to Ideal} \\
+\textbf{Dataset} & \textbf{Random} & \textbf{Greedy} & \textbf{HSEvo} \\
 \midrule
-Random Baseline & Static & 0.856 \\
-HSEvo & Evolved LLM Heuristic & \textbf{0.281} \\
+SS-B    & 0.450 & 0.043 & \textbf{0.001} \\
+auto93  & 0.669 & 0.620 & \textbf{0.584} \\
+pom3d   & 0.347 & 0.451 & \textbf{0.183} \\
+Apache  & 0.033 & \textbf{0.000} & 0.017 \\
+SS-D    & 0.763 & \textbf{0.541} & 0.719 \\
+\midrule
+\textbf{Average} & 0.452 & 0.331 & \textbf{0.301} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Despite strict evaluation budgets, the evolved solutions demonstrated improved trade-offs compared to baseline heuristics, particularly in scenarios requiring complex decision interactions across the software configuration spaces. Attempts to scale down the ReEvo and EoH frameworks to equivalent minimal-budget population sizes resulted in early pipeline failures due to hardcoded tournament selection constraints (which we verified by manually inspecting the framework source code). This highlights the fragility of certain evolutionary topologies under constrained resources. 
+HSEvo achieved the best overall average distance (0.301), outperforming both the random baseline (0.452) and the greedy baseline (0.331). The strongest improvements were on SS-B (0.001 vs.\ 0.043 greedy) and pom3d (0.183 vs.\ 0.451 greedy), where the multi-objective nature of the task benefits from the LLM's ability to reason about trade-offs across all objectives simultaneously. On Apache, the greedy baseline achieved a near-perfect score of 0.000 because the single-objective configuration space is effectively one-dimensional, leaving little room for improvement. On SS-D, HSEvo underperformed the greedy baseline (0.719 vs.\ 0.541), likely due to the constrained evolutionary budget being insufficient for this particular configuration landscape.
 
-These results nevertheless suggest that evolutionary LLMs can generalize beyond toy problems (like BPP) and operate effectively on realistic software engineering optimization tasks.
+Regarding RQ2, our constrained compute setting revealed clear practical trade-offs. HSEvo successfully operated under a population size of 2 with 4 function evaluations per dataset, while ReEvo and EoH failed due to hardcoded tournament selection constraints requiring larger minimum population sizes --- a fragility we confirmed by inspecting framework source code directly. This highlights that framework robustness under resource constraints is a non-trivial consideration for real SE deployment contexts where API costs are significant.
 
 \section{Discussion}
 
 \subsection{Results and Implications}
-The results support our hypothesis for RQ1: evolutionary LLMs can successfully generate coordination algorithms that outperform static baselines in certain settings. We observe that by embedding LLMs inside evolutionary structures, the system can automatically write Python heuristic functions that actively optimize MOOT objective variables. For software engineering practice, this implies that organizations may no longer need to hand-craft static tuning parameters for cloud architectures or routing logic. Instead, system engineers can define the high-level objectives (e.g., latency, cost) and allow an LLM-driven evolutionary process to generate custom, context-aware scheduling logic on the fly.
+The results support our hypothesis for RQ1: evolutionary LLMs can successfully generate coordination algorithms that outperform static baselines in certain settings. We observe that by embedding LLMs inside evolutionary structures, the system can automatically write Python heuristic functions that actively optimize MOOT objective variables. For software engineering practice, this implies that organizations may no longer need to hand-craft static tuning parameters for cloud architectures or routing logic. Instead, system engineers can define the high-level objectives (e.g., latency, cost) and allow an LLM-driven evolutionary process to generate custom, context-aware scheduling logic on the fly. It is important to note that the active-learning configuration selection framing used here is an approximation of full coordination algorithm design --- the LLM-generated priority function operates over static datasets rather than live system state, and results should be interpreted as a proof-of-concept rather than a production-ready coordination layer.
 
 However, several trade-offs exist:
 \begin{itemize}
@@ -168,9 +173,9 @@ Future work should explore scaling these methods to larger population sizes, uti
 
 \section{Threats to Validity}
 
-\textbf{Internal Validity:} Our primary threat to internal validity is the heavily constrained evaluation budget. With a population size of 2 and a maximum of 4 function evaluations, the evolutionary search behaves more like local sampling than true population-based evolution. Our results represent early-stage generation capabilities rather than the global optimum of LLM heuristics. Additionally, the stochastic nature of LLMs introduces variance.
+\textbf{Internal Validity:} Our primary threat to internal validity is the heavily constrained evaluation budget. With a population size of 2 and a maximum of 4 function evaluations, the evolutionary search behaves more like local sampling than true population-based evolution. Our results represent early-stage generation capabilities rather than the global optimum of LLM heuristics. Additionally, the stochastic nature of LLMs introduces variance. Due to API budget constraints, we report single-run results per dataset; future work should report mean $\pm$ standard deviation across at least 5 independent runs to properly account for LLM output stochasticity.
 
-\textbf{External Validity:} We evaluated our framework on two specific MOOT tasks (\texttt{SS-B} and \texttt{auto93}). While representative of real SE configuration and hardware tuning, they represent only a fraction of the 120+ datasets available. Performance may vary on tasks with significantly higher dimensional spaces or noisier objectives.
+\textbf{External Validity:} We evaluated our framework on five MOOT tasks spanning configuration tuning, system design, and process simulation. While representative of real SE optimization scenarios, they represent only a fraction of the 120+ datasets available. Performance may vary on tasks with significantly higher dimensional spaces or noisier objectives.
 
 \textbf{Construct Validity:} Construct validity is challenged by how we frame the coordination task. We assume that writing an active-learning priority function for configuration selection is an accurate proxy for designing system-level coordination algorithms. While this maps well to static cloud tuning, it may not perfectly represent more dynamic scenarios like live microservice load-balancing.
 

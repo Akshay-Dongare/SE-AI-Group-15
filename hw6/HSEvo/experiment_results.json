@@ -1,0 +1,34 @@
+{
+  "results": {
+    "SS-B": {
+      "random": 0.45,
+      "greedy": 0.043,
+      "hsevo": 0.001
+    },
+    "auto93": {
+      "random": 0.669,
+      "greedy": 0.62,
+      "hsevo": 0.584
+    },
+    "pom3d": {
+      "random": 0.347,
+      "greedy": 0.451,
+      "hsevo": 0.183
+    },
+    "Apache": {
+      "random": 0.033,
+      "greedy": 0.0,
+      "hsevo": 0.017
+    },
+    "SS-D": {
+      "random": 0.763,
+      "greedy": 0.541,
+      "hsevo": 0.719
+    }
+  },
+  "averages": {
+    "random": 0.452,
+    "greedy": 0.331,
+    "hsevo": 0.301
+  }
+}
