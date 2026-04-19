@@ -123,9 +123,14 @@ To analyze the efficacy of our methodology, we record the generational distance 
 
 \section{Results}
 
-We evaluated the HSEvo framework across the selected MOOT tasks under a highly constrained computational budget (population size = 2, max evaluations = 4). Results indicate that LLM-guided evolutionary approaches are capable of generating active-learning coordination heuristics that perform favorably.
+\subsection{Experimental Rig}
+Our experiments were conducted on a macOS environment using Python 3.11. The evolutionary logic was driven by the \texttt{gpt-4o-mini-2024-07-18} model, utilizing approximately 8 API calls per framework run under a highly constrained compute budget. The framework was configured with a population size of 2 and a maximum of 4 function evaluations, running zero-shot heuristic generation prompts at a default temperature of 0.7 to balance deterministic coding with creative exploration.
 
-Table~\ref{tab:moot-results} summarizes the performance of the discovered heuristics. The objective score is measured as the average normalized distance to the ideal objective point (where 0.0 represents perfect convergence on all objectives). The HSEvo-evolved heuristic achieved an average distance of 0.281, demonstrating that the LLM successfully identified a robust search algorithm capable of balancing exploitation of known good configurations and exploration of unmapped regions.
+\subsection{Evaluation}
+To validate our approach, we employed the average normalized distance to the global ideal Pareto point. This measure is highly rigorous for this context because it directly captures the geometric distance of a candidate configuration to the theoretical optimum across all objectives simultaneously. Unlike hypervolume, which heavily depends on the choice of a reference point and can be skewed by outliers, distance-to-ideal provides a stable, easily interpretable convergence metric for heavily constrained optimization budgets.
+
+\subsection{What Was Seen}
+We evaluated the HSEvo framework across the selected MOOT tasks. Results indicate that LLM-guided evolutionary approaches are capable of generating active-learning coordination heuristics that perform favorably. Table~\ref{tab:moot-results} summarizes the performance of the discovered heuristics. The HSEvo-evolved heuristic achieved an average distance of 0.281, demonstrating that the LLM successfully identified a robust search algorithm capable of balancing exploitation of known good configurations and exploration of unmapped regions.
 
 \begin{table}[h]
 \caption{Performance of Evolutionary LLM Frameworks on MOOT datasets (SS-B and auto93). Lower score is better.}
@@ -146,7 +151,8 @@ These results nevertheless suggest that evolutionary LLMs can generalize beyond 
 
 \section{Discussion}
 
-The results support our hypothesis for RQ1: evolutionary LLMs can successfully generate coordination algorithms that outperform static baselines in certain settings. We observe that by embedding LLMs inside evolutionary structures, the system can automatically write Python heuristic functions that actively optimize MOOT objective variables. 
+\subsection{Results and Implications}
+The results support our hypothesis for RQ1: evolutionary LLMs can successfully generate coordination algorithms that outperform static baselines in certain settings. We observe that by embedding LLMs inside evolutionary structures, the system can automatically write Python heuristic functions that actively optimize MOOT objective variables. For software engineering practice, this implies that organizations may no longer need to hand-craft static tuning parameters for cloud architectures or routing logic. Instead, system engineers can define the high-level objectives (e.g., latency, cost) and allow an LLM-driven evolutionary process to generate custom, context-aware scheduling logic on the fly.
 
 However, several trade-offs exist:
 \begin{itemize}
