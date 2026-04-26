@@ -3,11 +3,8 @@ import random
 import math
 import scipy
 import torch
-import numpy as np
-
 def priority_v2(candidate_x: np.ndarray, evaluated_x: np.ndarray, evaluated_y: np.ndarray) -> np.ndarray:
-    """Returns a priority score for each candidate configuration using a consideration
-    of both the distance to evaluated points and the performance of those points.
+    """Returns a priority score for each candidate configuration using a multi-objective approach with enhanced scoring.
 
     Args:
         candidate_x: Array of shape (N, D) containing features for unevaluated candidates.
@@ -17,28 +14,34 @@ def priority_v2(candidate_x: np.ndarray, evaluated_x: np.ndarray, evaluated_y: n
     Return:
         Array of shape (N,) containing the priority score for each candidate.
     """
-    # Ensure dimensions are correct
-    if evaluated_x.shape[0] == 0:
-        # If there are no evaluated candidates, return random scores
-        return np.random.rand(candidate_x.shape[0])
-
-    # Compute the distances from each candidate to all evaluated configurations
+    import numpy as np
     from scipy.spatial.distance import cdist
-    distances = cdist(candidate_x, evaluated_x)
+
+    if evaluated_x.shape[0] == 0:
+        return np.random.rand(candidate_x.shape[0])
     
-    # Get the minimum distance to any evaluated configuration
+    # Compute the distance from evaluated candidates
+    distances = cdist(candidate_x, evaluated_x)
     min_distances = np.min(distances, axis=1)
 
-    # Compute the average of the evaluated_y objectives for each evaluated point
-    averaged_objectives = np.mean(evaluated_y, axis=0)
+    # Normalize evaluated_y using min-max normalization for each objective
+    normalized_y = (evaluated_y - np.min(evaluated_y, axis=0)) / (np.max(evaluated_y, axis=0) - np.min(evaluated_y, axis=0) + 1e-10)
 
-    # Compute the scores by considering both distance and performance; larger scores for worse performance
-    performance_scores = np.maximum(averaged_objectives - np.min(evaluated_y, axis=0), 0)
-    
-    # Normalize performance scores
-    performance_scores = performance_scores / np.sum(performance_scores) if np.sum(performance_scores) != 0 else performance_scores
+    # Calculate the diversity score based on the spread of evaluated objectives
+    diversity_score = np.std(normalized_y, axis=0)
 
-    # Combine distance and performance scores with appropriate weighting
-    priority_scores = min_distances * (1 - performance_scores)
+    # Compute the weight for each objective (lower is better)
+    weights = 1 / (diversity_score + 1e-10)
+
+    # Calculate the importance score for each evaluated candidate based on weighted normalized objectives
+    weighted_scores = np.dot(normalized_y, weights) / np.sum(weights)
+
+    # Calculate the candidate scores based on their distance from the weighted objectives
+    candidate_scores = np.zeros(candidate_x.shape[0])
+    for i in range(candidate_x.shape[0]):
+        candidate_scores[i] = np.sum((weighted_scores - normalized_y)**2)
+
+    # Combine distance score with candidate scores using a weighted sum
+    priority_scores = min_distances + candidate_scores
 
     return priority_scores

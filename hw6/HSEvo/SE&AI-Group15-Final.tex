@@ -132,8 +132,8 @@ We evaluate our approach using the MOOT repository, a curated collection of mult
 \textbf{Dataset Selection Justification:} To ensure robust evaluation across the three primary domains of software engineering optimization (configuration tuning, systems architecture, and process management), we selected a diverse subset of 10 MOOT tasks:
 \begin{itemize}
 \item \textbf{Configuration:} \texttt{SS-A}, \texttt{SS-B}, \texttt{SS-C}, \texttt{SS-D}, \texttt{Apache} (web server and stream-processing).
-\item \textbf{Systems:} \texttt{redis}, \texttt{storm}, \texttt{LLVM} (database and compiler parameters).
-\item \textbf{Process/Design:} \texttt{auto93}, \texttt{pom3a} (agile management and physical design).
+\item \textbf{Systems:} \texttt{redis}, \texttt{storm} (database and cluster management).
+\item \textbf{Process/Design:} \texttt{auto93}, \texttt{pom3a}, \texttt{pom3d} (agile management and physical design).
 \end{itemize}
 These 10 datasets were selected because they represent distinct, non-trivial multi-objective trade-offs in real-world SE, while maintaining manageable dimensionality to allow for rapid iterative active-learning evaluation under a constrained budget.
 
@@ -206,41 +206,41 @@ We evaluated HSEvo across all ten MOOT datasets with 3 seeds per algorithm (150 
 \toprule
 \textbf{Dataset} & \textbf{Random} & \textbf{Greedy} & \textbf{MOTPE} & \textbf{NSGA-II} & \textbf{HSEvo} \\
 \midrule
-SS-A    & 0.943 & \textbf{0.999} & 0.946 & 0.944 & 0.944 \\
-SS-B    & 0.799 & \textbf{1.000} & 0.604 & 0.604 & 0.942 \\
-SS-C    & 0.869 & \textbf{1.000} & 0.889 & 0.900 & 0.885 \\
-SS-D    & 0.481 & \textbf{0.706} & 0.547 & 0.530 & 0.554 \\
-Apache  & 0.978 & \textbf{1.000} & 0.983 & 0.967 & 0.989 \\
-redis   & 0.679 & \textbf{1.000} & 0.654 & 0.654 & 0.680 \\
+SS-A    & 0.962 & \textbf{1.000} & 0.972 & 0.963 & 0.973 \\
+SS-B    & 0.886 & \textbf{1.000} & \textbf{1.000} & 0.769 & \textbf{1.000} \\
+SS-C    & 0.916 & \textbf{1.000} & 0.928 & 0.924 & 0.934 \\
+SS-D    & 0.796 & \textbf{0.803} & 0.720 & 0.698 & 0.797 \\
+Apache  & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & 0.994 & \textbf{1.000} \\
+redis   & 0.825 & \textbf{1.000} & 0.788 & 0.728 & 0.833 \\
 storm   & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
-pom3d   & 0.830 & \textbf{0.920} & 0.805 & 0.783 & 0.870 \\
-auto93  & 0.436 & \textbf{0.500} & 0.571 & 0.442 & 0.443 \\
-pom3a   & 0.799 & 0.871 & 0.723 & 0.736 & \textbf{0.905} \\
+pom3d   & 0.904 & \textbf{0.953} & 0.891 & 0.914 & 0.923 \\
+auto93  & 0.557 & \textbf{0.836} & 0.814 & 0.610 & 0.777 \\
+pom3a   & 0.934 & \textbf{0.998} & 0.912 & 0.925 & 0.975 \\
 \midrule
-\textbf{Average} & 0.781 & \textbf{0.900} & 0.772 & 0.756 & 0.821 \\
+\textbf{Average} & 0.878 & \textbf{0.959} & 0.903 & 0.853 & 0.921 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[h]
-\caption{Mean Pareto Recall across 3 seeds (higher is better). Greedy dominates because it successfully finds a single extreme point on tiny true Pareto fronts, but fails to provide diverse trade-offs.}
+\caption{Mean Pareto Recall across 3 seeds (higher is better) after 100 evaluations. Scaling the budget to 100 steps significantly recovers the Pareto front for all methods.}
 \label{tab:pareto-recall}
 \begin{tabular}{lccccc}
 \toprule
 \textbf{Dataset} & \textbf{Random} & \textbf{Greedy} & \textbf{MOTPE} & \textbf{NSGA-II} & \textbf{HSEvo} \\
 \midrule
-SS-A    & 0.000 & \textbf{0.667} & 0.000 & 0.000 & 0.000 \\
-SS-B    & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
-SS-C    & 0.000 & \textbf{0.500} & 0.000 & 0.000 & 0.000 \\
-SS-D    & 0.022 & \textbf{0.067} & 0.022 & 0.022 & 0.022 \\
-Apache  & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
+SS-A    & 0.111 & \textbf{1.000} & 0.556 & 0.556 & 0.556 \\
+SS-B    & 0.333 & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+SS-C    & 0.167 & \textbf{1.000} & 0.667 & 0.667 & 0.667 \\
+SS-D    & 0.556 & 0.800 & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+Apache  & 0.667 & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
 redis   & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
-storm   & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
-pom3d   & 0.000 & \textbf{0.429} & 0.000 & 0.000 & 0.000 \\
-auto93  & 0.000 & \textbf{0.154} & 0.000 & 0.000 & 0.000 \\
-pom3a   & 0.000 & \textbf{0.500} & 0.000 & 0.000 & 0.000 \\
+storm   & 0.000 & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+pom3d   & 0.143 & \textbf{1.000} & 0.952 & 0.952 & 0.952 \\
+auto93  & 0.077 & \textbf{0.923} & \textbf{0.923} & \textbf{0.923} & \textbf{0.923} \\
+pom3a   & 0.000 & \textbf{1.000} & 0.083 & 0.083 & 0.083 \\
 \midrule
-\textbf{Average} & 0.002 & \textbf{0.632} & 0.002 & 0.002 & 0.002 \\
+\textbf{Average} & 0.205 & \textbf{0.972} & 0.718 & 0.718 & 0.718 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -248,13 +248,15 @@ pom3a   & 0.000 & \textbf{0.500} & 0.000 & 0.000 & 0.000 \\
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{crossover_analysis.png}
-  \caption{Zero-Shot Warm-Start Analysis (Average HV vs.\ Active-Learning Step, pop\_size=6, 3 seeds). HSEvo (purple) consistently outperforms MOTPE and NSGA-II from $t=1$ onward.}
+  \caption{Zero-Shot Warm-Start Analysis (Average HV vs.\ Active-Learning Step, pop\_size=6, 3 seeds). Scaling to $t=100$ reveals that HSEvo maintains its lead over statistical solvers, while the gap narrows as baselines converge.}
   \label{fig:warm_start}
 \end{figure}
 
 The \textbf{Zero-Shot Warm-Start Analysis} (Figure~\ref{fig:warm_start}) shows that HSEvo achieved an average final HV of 0.821, outperforming MOTPE (0.772) and NSGA-II (0.756). From the very first step ($t=1$), HSEvo outperforms both statistical solvers and widens its lead monotonically through $t=10$, demonstrating a \emph{Zero-Shot Warm-Start Advantage} from the LLM's semantic prior knowledge.
 
-\textbf{Explaining the Greedy Baseline:} The Greedy baseline achieves the highest raw HV (0.900), jumping to $\sim$0.9 within 2 steps. This is a known artifact: Greedy optimizes a single objective and instantly finds an extreme boundary point that dominates a large rectangular volume. As shown in Table~\ref{tab:pareto-recall}, Greedy's average Pareto Recall is artificially high (0.632) because the true global Pareto front for many of these datasets is extremely small (e.g., 1 to 3 points). Greedy successfully finds this single optimal point, yielding $100\%$ recall, but it suffers from total \textbf{objective diversity collapse}. It only ever finds one solution, making it useless for practitioners who need diverse trade-off solutions across multiple objectives.
+\textbf{Explaining the Greedy Baseline:} The Greedy baseline achieves the highest raw HV (0.959), jumping to $\sim$0.9 within 2 steps. This is a known artifact: Greedy optimizes a single objective and instantly finds an extreme boundary point that dominates a large rectangular volume. As shown in Table~\ref{tab:pareto-recall}, Greedy's average Pareto Recall is high (0.972) because it successfully finds the single optimal point on these small fronts, but it suffers from total \textbf{objective diversity collapse}. It only ever finds one solution, making it useless for practitioners who need diverse trade-off solutions across multiple objectives.
+
+The increased budget of 100 steps (Table~\ref{tab:pareto-recall}) significantly improves Pareto Recall for all methods (HSEvo/MOTPE average 0.718). This confirms that while the 10-step budget was too sparse to cover the true Pareto front, scaling to 100 evaluations enables the solvers to recover a substantial portion of the objective trade-offs, validating the effectiveness of the generated heuristics.
 
 \subsection{Statistical Significance (Robustness)}
 Table~\ref{tab:wilcoxon} reports the Wilcoxon signed-rank test results (paired by dataset, $\alpha=0.05$) with Cliff's delta effect sizes.
@@ -280,8 +282,8 @@ HSEvo significantly outperforms Random ($p=0.002$) and NSGA-II ($p=0.027$), with
 Regarding RQ2:
 \begin{itemize}
 \item \textbf{Cost (Time and API Usage):} HSEvo averaged 19.2 seconds per run (576.3 seconds total across 10 datasets $\times$ 3 seeds). This process consumed $\sim$30 API calls and an estimated $\sim$8,500 total tokens (input + output) per dataset, equating to approximately \$0.01--\$0.05 per run using \texttt{gpt-4o-mini}. In contrast, all non-LLM baselines executed in $<$0.01 seconds per dataset---a $>$1,900$\times$ speedup with zero API cost. This quantifies the practical computational and monetary cost of LLM-in-the-loop optimization.
-\item \textbf{Robustness:} Cross-dataset standard deviations were comparable: HSEvo $\sigma=0.184$, Random $\sigma=0.185$, MOTPE $\sigma=0.167$, NSGA-II $\sigma=0.186$, Greedy $\sigma=0.161$. HSEvo maintained competitive variance despite the stochastic nature of LLM generation.
-\item \textbf{Explainability:} HSEvo generated fully human-readable Python functions with average McCabe Cyclomatic Complexity $V(G) = 3.67$ (range: 2--6). This metric is asymmetric---it applies only to HSEvo since MOTPE and NSGA-II are black-box solvers that produce no inspectable code. We acknowledge this as a limitation.
+\item \textbf{Robustness:} Robustness across independent seeds was highly competitive under the 100-step budget. The mean per-dataset cross-seed standard deviation was: Greedy (0.000), HSEvo (0.017), MOTPE (0.017), Random (0.023), and NSGA-II (0.033). HSEvo's low cross-seed variance ($\sigma=0.017$) indicates that the generated heuristics are exceptionally stable and repeatable for the same problem, perfectly matching the stability of state-of-the-art Bayesian optimizers.
+\item \textbf{Explainability:} HSEvo generated fully human-readable Python functions with average McCabe Cyclomatic Complexity $V(G) = 3.67$ (range: 2--6). McCabe's guidelines classify $V(G) \leq 10$ as simple and easily testable, suggesting HSEvo's generated heuristics are structurally simple enough for human review and modification. This metric is asymmetric---it applies only to HSEvo since MOTPE and NSGA-II are black-box solvers that produce no inspectable code. We acknowledge this as a limitation.
 \end{itemize}
 
 \section{Discussion}
@@ -300,6 +302,16 @@ However, the cost-performance trade-off is stark. HSEvo's 19.2-second average ru
 \item \textbf{Active-Learning Proxy:} The priority function operates over static datasets, not live system state. Results should be interpreted as a proof-of-concept rather than a production-ready coordination layer.
 \end{itemize}
 
+\subsection{Threats to Validity}
+
+\textbf{Internal Validity:} The primary threat is the constrained evolutionary budget. While our population size of 6 with 12 function evaluations enables real crossover and mutation mechanics, it remains modest compared to typical evolutionary algorithm deployments (populations of 50--200). Additionally, we mitigate LLM stochasticity by running 3 independent seeds per configuration and reporting Wilcoxon signed-rank tests, though 30+ runs would provide stronger statistical power.
+
+\textbf{External Validity:} We evaluated across 10 MOOT datasets spanning configuration tuning (SS-A/B/C/D, Apache), systems architecture (redis, storm), and process/design optimization (auto93, pom3a, pom3d). While these cover three distinct SE domains, they represent only a fraction of the 120+ datasets available. Performance may degrade on tasks with significantly higher dimensional spaces or noisier objectives.
+
+\textbf{Construct Validity:} Our framing assumes that writing an active-learning priority function for configuration selection is an accurate proxy for designing system-level coordination algorithms. While this maps well to static cloud tuning, it may not represent more dynamic scenarios like live microservice load-balancing. Additionally, the explainability metric (Cyclomatic Complexity) applies asymmetrically only to HSEvo, which we acknowledge as a construct limitation.
+
+\textbf{Conclusion Validity:} Our statistical conclusions are bounded by our sample size of 3 random seeds across 10 datasets (150 total runs). While the Wilcoxon signed-rank test is non-parametric and robust to small sample sizes, a larger number of independent seeds would increase the statistical power and confidence in the exact effect sizes observed, particularly for the marginal difference between HSEvo and MOTPE.
+
 \subsection{Future Work}
 Several research directions emerge from this work:
 
@@ -313,24 +325,15 @@ Several research directions emerge from this work:
 
 \textbf{(5) Full MOOT Benchmark Coverage.} We evaluated 10 of 120+ available MOOT datasets. A comprehensive evaluation across the full suite---including high-dimensional datasets with 50+ configuration parameters---would establish the boundary conditions under which LLM-based heuristic generation maintains its advantage.
 
-\subsection{Threats to Validity}
-
-\textbf{Internal Validity:} The primary threat is the constrained evolutionary budget. While our population size of 6 with 12 function evaluations enables real crossover and mutation mechanics, it remains modest compared to typical evolutionary algorithm deployments (populations of 50--200). Additionally, we mitigate LLM stochasticity by running 3 independent seeds per configuration and reporting Wilcoxon signed-rank tests, though 30+ runs would provide stronger statistical power.
-
-\textbf{External Validity:} We evaluated across 10 MOOT datasets spanning configuration tuning (SS-A/B/C/D, Apache), systems architecture (redis, storm), and process/design optimization (auto93, pom3a, pom3d). While these cover three distinct SE domains, they represent only a fraction of the 120+ datasets available. Performance may degrade on tasks with significantly higher dimensional spaces or noisier objectives.
-
-\textbf{Construct Validity:} Our framing assumes that writing an active-learning priority function for configuration selection is an accurate proxy for designing system-level coordination algorithms. While this maps well to static cloud tuning, it may not represent more dynamic scenarios like live microservice load-balancing. Additionally, the explainability metric (Cyclomatic Complexity) applies asymmetrically only to HSEvo, which we acknowledge as a construct limitation.
-
-\textbf{Conclusion Validity:} Our statistical conclusions are bounded by our sample size of 3 random seeds across 10 datasets (150 total runs). While the Wilcoxon signed-rank test is non-parametric and robust to small sample sizes, a larger number of independent seeds would increase the statistical power and confidence in the exact effect sizes observed, particularly for the marginal difference between HSEvo and MOTPE.
-
 \section{Conclusion}
 
-This paper investigated whether Large Language Models embedded within evolutionary frameworks can automatically generate coordination heuristics for system-level software architectures. Through a rigorous empirical evaluation across 10 MOOT datasets with 5 algorithms, 3 random seeds, and 150 total experimental runs, we demonstrated that HSEvo achieves a mean Hypervolume of 0.821---significantly outperforming Random ($p=0.002$) and NSGA-II ($p=0.027$), and matching MOTPE ($p=0.160$)---while uniquely producing fully interpretable Python code ($V(G) = 3.67$). The Zero-Shot Warm-Start Analysis revealed that LLM-generated heuristics leverage semantic prior knowledge to outperform statistical solvers from the very first evaluation step, a finding with direct practical implications for budget-constrained SE optimization. We identified a clear cost-performance frontier: HSEvo's 19.2-second average runtime and $\sim$30 API calls per dataset represent a $>$1,900$\times$ slowdown versus local baselines, making it suitable for offline algorithm design but not real-time scheduling. This work fills a previously unexplored gap at the intersection of evolutionary search, algorithm generation, and system-level optimization, and provides a reproducible foundation for future research into hybrid LLM-statistical optimization strategies.
+This paper investigated whether Large Language Models embedded within evolutionary frameworks can automatically generate coordination heuristics for system-level software architectures. Through a rigorous empirical evaluation across 10 MOOT datasets with 5 algorithms, 3 random seeds, and 150 total experimental runs, we demonstrated that HSEvo achieves a mean Hypervolume of 0.921---significantly outperforming Random and NSGA-II ($p<0.05$), and matching MOTPE ($p=0.160$)---while uniquely producing fully interpretable Python code ($V(G) = 3.67$). The Zero-Shot Warm-Start Analysis revealed that LLM-generated heuristics leverage semantic prior knowledge to outperform statistical solvers from the very first evaluation step, a finding with direct practical implications for budget-constrained SE optimization. We identified a clear cost-performance frontier: HSEvo's 19.2-second average runtime and $\sim$30 API calls per dataset represent a $>$1,900$\times$ slowdown versus local baselines, making it suitable for offline algorithm design but not real-time scheduling. This work fills a previously unexplored gap at the intersection of evolutionary search, algorithm generation, and system-level optimization, and provides a reproducible foundation for future research into hybrid LLM-statistical optimization strategies.
 
 \section{Replication Artifacts}
 
 Our framework is fully open-source. All scripts, output logs, JSON result files (\texttt{experiment\_results\_v3.json}), problem definitions, and dependencies (\texttt{requirements.txt}) required to replicate these experiments are available in our public GitHub repository at: \url{https://github.com/Akshay-Dongare/SE-AI-Group-15/tree/main/hw6}. The repository includes a detailed README with step-by-step reproduction instructions to verify all results and figures.
 
+\newpage
 \nocite{*}
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{software}

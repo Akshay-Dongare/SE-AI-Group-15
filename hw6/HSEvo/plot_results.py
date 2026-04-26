@@ -13,7 +13,7 @@ colors = {"random": "#888888", "greedy": "#e74c3c", "motpe": "#3498db", "nsgaii"
 markers = {"random": "s", "greedy": "^", "motpe": "D", "nsgaii": "o", "hsevo": "P"}
 
 # Average HV per step across all datasets and seeds
-avg_ts = {a: np.zeros(10) for a in algs}
+avg_ts = {a: np.zeros(100) for a in algs}
 for ds in datasets:
     for a in algs:
         for s in seeds:
@@ -25,17 +25,17 @@ for a in algs:
 
 fig, ax = plt.subplots(figsize=(10, 6))
 for a in algs:
-    ax.plot(range(1, 11), avg_ts[a], marker=markers[a], label=labels[a], 
-            color=colors[a], linewidth=2, markersize=7)
+    ax.plot(range(1, 101), avg_ts[a], marker=markers[a], label=labels[a], 
+            color=colors[a], linewidth=2, markersize=4)
 
 ax.set_title('Zero-Shot Warm-Start Analysis\n(Average Hypervolume vs. Active-Learning Step, pop_size=6, 3 seeds)', 
              fontsize=13, fontweight='bold')
 ax.set_xlabel('Active-Learning Step (Evaluation Budget)', fontsize=12)
 ax.set_ylabel('Average Hypervolume', fontsize=12)
-ax.set_xticks(range(1, 11))
+ax.set_xticks(np.arange(0, 101, 10))
 ax.grid(True, alpha=0.3)
 ax.legend(fontsize=11, loc='lower right')
-ax.set_ylim(0.55, 0.95)
+ax.set_ylim(0.55, 1.0)
 
 plt.tight_layout()
 plt.savefig('crossover_analysis.png', dpi=300)

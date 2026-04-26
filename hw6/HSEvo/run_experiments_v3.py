@@ -29,7 +29,7 @@ DATASETS = {
     "pom3a":    "../../moot/optimize/process/pom3a.csv"
 }
 
-NUM_EVALUATIONS = 10
+NUM_EVALUATIONS = 100
 SEEDS = [42, 123, 7]  # 3 seeds for statistical testing
 
 def load_dataset(path):
