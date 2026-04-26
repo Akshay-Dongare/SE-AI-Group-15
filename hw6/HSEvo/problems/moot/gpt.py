@@ -6,27 +6,32 @@ import torch
 import numpy as np
 
 def priority_v2(candidate_x: np.ndarray, evaluated_x: np.ndarray, evaluated_y: np.ndarray) -> np.ndarray:
-    """Scores candidates by distance from evaluated points and novelty of objectives."""
+    """Returns a priority score for each candidate configuration, incorporating a multi-objective approach.
+
+    Args:
+        candidate_x: Array of shape (N, D) containing features for unevaluated candidates.
+        evaluated_x: Array of shape (M, D) containing features for already evaluated candidates.
+        evaluated_y: Array of shape (M, K) containing objective values for already evaluated candidates. All objectives are to be minimized.
+
+    Return:
+        Array of shape (N,) containing the priority score for each candidate.
+    """
+    from scipy.spatial.distance import cdist
     
+    # Calculate the distances from candidates to evaluated points
     if evaluated_x.shape[0] == 0:
         return np.random.rand(candidate_x.shape[0])
     
-    # Calculate distances from candidate points to evaluated points
-    distances = np.linalg.norm(candidate_x[:, np.newaxis] - evaluated_x, axis=2)
+    distances = cdist(candidate_x, evaluated_x)
     min_distances = np.min(distances, axis=1)
-
-    # Normalize evaluated objectives for scoring
-    min_objectives = np.min(evaluated_y, axis=0)
-    max_objectives = np.max(evaluated_y, axis=0)
-    normalized_objectives = (evaluated_y - min_objectives) / (max_objectives - min_objectives + 1e-10)
-
-    # Calculate novelty scores based on distances to evaluated objectives
-    novelty_scores = np.zeros(candidate_x.shape[0])
+    
+    # Normalize the evaluated_y values for multi-objective scores
+    normalized_y = (evaluated_y - evaluated_y.min(axis=0)) / (evaluated_y.max(axis=0) - evaluated_y.min(axis=0))
+    
+    # Score candidates based on their distance to evaluated points and their performance in objective space
+    score = np.zeros(candidate_x.shape[0])
     for i in range(candidate_x.shape[0]):
-        candidate_objective = np.random.rand(evaluated_y.shape[1])  # Placeholder for candidate's objective values
-        novelty_scores[i] = np.mean(np.linalg.norm(normalized_objectives - candidate_objective, axis=1))
+        candidate_distances = distances[i]
+        score[i] = np.mean(min_distances[i]) - np.mean(normalized_y)
 
-    # Combine minimum distance score and novelty score
-    scores = min_distances + novelty_scores
-
-    return scores
+    return score
