@@ -234,9 +234,9 @@ Crucially, the step-by-step timeseries plot directly addresses at which active-l
 
 Regarding RQ2, our redefined metrics highlighted clear practical trade-offs:
 \begin{itemize}
-\item \textbf{Cost:} HSEvo incurred a significant Token Usage Overhead ($\sim$15,000 tokens per dataset) and API latency ($\sim$15 minutes total), whereas the local statistical baselines (MOTPE, NSGA-II) executed near-instantaneously ($<0.1$ seconds).
-\item \textbf{Robustness:} HSEvo proved algorithmically robust, maintaining competitive Hypervolume across all 10 diverse datasets without the premature population collapse observed in older frameworks like ReEvo (which hardcode large tournament sizes).
-\item \textbf{Explainability:} Unlike the opaque numerical weight matrices of MOTPE, HSEvo generated fully human-readable Python functions. The resulting active-learning heuristics exhibited a low McCabe Cyclomatic Complexity ($V(G) \approx 3$), consisting of simple, interpretable Euclidean distance calculations and conditional logic.
+\item \textbf{Cost:} HSEvo incurred a noticeable Token Usage Overhead ($\sim$6,000 tokens per dataset over 4 evaluation cycles) and API latency ($\sim$5 minutes total wall-clock time), whereas the local statistical baselines (MOTPE, NSGA-II) executed near-instantaneously ($<0.1$ seconds).
+\item \textbf{Robustness:} We calculated Algorithmic Variance as the standard deviation of final Hypervolume across all 10 datasets. HSEvo exhibited a cross-dataset standard deviation of $0.216$, which is slightly higher than MOTPE ($0.197$) and NSGA-II ($0.198$). This indicates that while HSEvo achieves a higher mean Hypervolume, the LLM's heuristic generation exhibits slightly higher variance across varied system landscapes than deterministic mathematical solvers. However, it still avoided the premature population collapse observed in older frameworks like ReEvo.
+\item \textbf{Explainability:} Unlike the opaque numerical weight matrices of MOTPE, HSEvo generated fully human-readable Python functions. The resulting active-learning heuristics exhibited an average McCabe Cyclomatic Complexity of exactly $V(G) = 3.67$ (ranging from $2$ to $6$), consisting of simple, interpretable Euclidean distance calculations and readable conditional logic.
 \end{itemize}
 
 \section{Discussion}
