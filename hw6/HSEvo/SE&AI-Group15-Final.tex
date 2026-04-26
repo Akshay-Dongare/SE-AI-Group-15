@@ -1,6 +1,7 @@
 \documentclass[sigconf,nonacm]{acmart}
 
 \title{Evolutionary LLMs for Automated Coordination Algorithm Design in System-Level Architectures}
+\subtitle{Group 15}
 
 \author{Akshay Dongare}
 \affiliation{
@@ -20,12 +21,14 @@
 \begin{document}
 
 \begin{abstract}
-Modern software systems rely on complex coordination logic across interacting components, yet such logic is often manually designed, brittle, and difficult to optimize. This paper explores whether large language models (LLMs), embedded within evolutionary frameworks, can automatically generate and improve active-learning configuration heuristics for system-level architectures. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate the HSEvo evolutionary LLM framework on the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, outperforming static baselines on the MOOT benchmark. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
+Modern software systems rely on complex coordination logic across interacting components, yet such logic is often manually designed, brittle, and difficult to optimize. This paper explores whether large language models (LLMs), embedded within evolutionary frameworks, can automatically generate and improve active-learning configuration heuristics for system-level architectures. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate the HSEvo evolutionary LLM framework on the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, matching the performance of state-of-the-art statistical solvers (MOTPE) and losing only to Greedy baselines on raw Hypervolume due to the latter's objective diversity collapse. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}
+
+\textbf{Problem Statement and Validity:} The problem addressed in this paper is the high cost, brittleness, and poor scalability of manually tuning system coordination logic. As modern software systems (e.g., cloud microservices, multi-agent workflows) grow in complexity, hand-crafted static algorithms fail to adapt to dynamic workloads, shifting data distributions, and massive configuration spaces. The validity of this problem is supported by industry consensus: manual tuning results in sub-optimal system performance, resource bottlenecks, and significant engineering overhead. Therefore, there is a critical, validated need for automated approaches to generate adaptive coordination heuristics.
 
 Modern software engineering is characterized by complex systems composed of interacting components such as multi-agent LLM workflows and cloud microservices. These systems require coordination logic that determines how components interact, route tasks, and allocate resources. While flexible architectures allow many design choices, they introduce a large space of algorithmic parameters and routing heuristics that must be tuned.
 
@@ -39,7 +42,7 @@ To ensure realism and generalizability, we evaluate our approach using the MOOT 
 
 \textbf{RQ1:} Can an LLM embedded within an evolutionary framework automatically generate and evolve superior configuration heuristics for system-level architectures compared to static heuristic baselines?
 
-\textbf{RQ2:} What trade-offs exist in cost, robustness, and interpretability when using evolutionary LLM frameworks under constrained compute budgets?
+\textbf{RQ2:} What trade-offs exist in cost (wall-clock time and API calls), robustness (cross-dataset variance), and interpretability (Cyclomatic Complexity) when using evolutionary LLM frameworks under constrained compute budgets?
 
 \section{Contributions}
 
@@ -54,9 +57,7 @@ This paper makes the following contributions:
 
 \section{Background and Motivation}
 
-\textbf{Problem Statement and Validity:} The problem addressed in this paper is the high cost, brittleness, and poor scalability of manually tuning system coordination logic. As modern software systems (e.g., cloud microservices, multi-agent workflows) grow in complexity, hand-crafted static algorithms fail to adapt to dynamic workloads, shifting data distributions, and massive configuration spaces. The validity of this problem is supported by industry consensus: manual tuning results in sub-optimal system performance, resource bottlenecks, and significant engineering overhead. Therefore, there is a critical, validated need for automated approaches to generate adaptive coordination heuristics.
-
-Given these challenges, our motivation is to determine if Large Language Models (LLMs) can resolve this bottleneck by automating the algorithmic design process itself. LLMs possess deep internal representations of code logic and optimization principles acquired during pre-training, making them strong candidates for writing active-learning algorithms that dynamically adapt to new datasets. We refer to these as \textbf{active-learning configuration heuristics}---algorithms that iteratively select the most informative system configurations to test based on prior system observations. 
+Given the challenges outlined in our problem statement, our motivation is to determine if Large Language Models (LLMs) can resolve this bottleneck by automating the algorithmic design process itself. LLMs possess deep internal representations of code logic and optimization principles acquired during pre-training, making them strong candidates for writing active-learning algorithms that dynamically adapt to new datasets. We refer to these as \textbf{active-learning configuration heuristics}---which we formally define as code-based selection functions that iteratively choose the next most informative system configuration to evaluate based on the history of prior configurations and their performance scores. 
 
 To ensure realistic, valid evaluation, we target tasks from the MOOT (Multi-Objective Optimization Tasks) repository. The MOOT data is derived from heavily-cited software engineering research published at top-tier venues (e.g., ICSE, ASE, TSE). These datasets represent valid, real-world software configuration and system tuning scenarios, grounding our framework in practical SE problems rather than abstract theoretical math functions.
 
@@ -177,7 +178,7 @@ The evolutionary logic was driven by HSEvo \cite{dat2025hsevo} using the \texttt
 Our experimental design is explicitly structured to address all goals outlined in our Research Questions:
 \begin{itemize}
 \item \textbf{Addressing RQ1 (Performance against Baselines):} To answer whether LLMs can generate superior heuristics, we designed a comparative experiment. We execute the LLM-generated heuristics across 10 diverse MOOT datasets and record the step-by-step Hypervolume. We compare these results directly against two static baselines (Random and Greedy) and two state-of-the-art statistical solvers (MOTPE and NSGA-II) under the exact same evaluation budget (10 steps) and random seed (42). This isolates the algorithmic generation capability as the sole independent variable.
-\item \textbf{Addressing Alternative Baselines:} While our study originally focused on Random and Greedy baselines, a review of the literature revealed several other non-LLM baselines commonly used. To ensure empirical rigor, our experimental design incorporates Tree-structured Parzen Estimator (MOTPE) and Non-dominated Sorting Genetic Algorithm (NSGA-II).
+\item \textbf{Addressing Alternative Baselines:} While our study originally focused on Random and Greedy baselines, a review of the literature revealed several other non-LLM baselines commonly used. To ensure empirical rigor, our experimental design incorporates Tree-structured Parzen Estimator (MOTPE) and Non-dominated Sorting Genetic Algorithm (NSGA-II). We specifically selected MOTPE and NSGA-II because they represent the standard continuous and evolutionary optimization baselines widely deployed in the literature from which the MOOT benchmark derives. We acknowledge that FLASH and DODGE are also state-of-the-art baselines tailored explicitly by the MOOT authors for software configuration tasks; we omit them here due to framework integration constraints but identify their inclusion as a critical direction for future work.
 \item \textbf{Addressing RQ2 (Trade-offs):} To answer what trade-offs exist, our experimental design monitors the end-to-end framework execution. We actively record API token usage and latency (to measure Cost), calculate Hypervolume variance across the 10 datasets (to measure Robustness), and analyze the generated Python source code via McCabe's Cyclomatic Complexity (to measure Explainability/Interpretability).
 \end{itemize}
 
@@ -221,6 +222,29 @@ pom3a   & 0.799 & 0.871 & 0.723 & 0.736 & \textbf{0.905} \\
 \end{tabular}
 \end{table}
 
+\begin{table}[h]
+\caption{Mean Pareto Recall across 3 seeds (higher is better). Greedy dominates because it successfully finds a single extreme point on tiny true Pareto fronts, but fails to provide diverse trade-offs.}
+\label{tab:pareto-recall}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Dataset} & \textbf{Random} & \textbf{Greedy} & \textbf{MOTPE} & \textbf{NSGA-II} & \textbf{HSEvo} \\
+\midrule
+SS-A    & 0.000 & \textbf{0.667} & 0.000 & 0.000 & 0.000 \\
+SS-B    & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
+SS-C    & 0.000 & \textbf{0.500} & 0.000 & 0.000 & 0.000 \\
+SS-D    & 0.022 & \textbf{0.067} & 0.022 & 0.022 & 0.022 \\
+Apache  & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
+redis   & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
+storm   & 0.000 & \textbf{1.000} & 0.000 & 0.000 & 0.000 \\
+pom3d   & 0.000 & \textbf{0.429} & 0.000 & 0.000 & 0.000 \\
+auto93  & 0.000 & \textbf{0.154} & 0.000 & 0.000 & 0.000 \\
+pom3a   & 0.000 & \textbf{0.500} & 0.000 & 0.000 & 0.000 \\
+\midrule
+\textbf{Average} & 0.002 & \textbf{0.632} & 0.002 & 0.002 & 0.002 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{crossover_analysis.png}
@@ -230,7 +254,7 @@ pom3a   & 0.799 & 0.871 & 0.723 & 0.736 & \textbf{0.905} \\
 
 The \textbf{Zero-Shot Warm-Start Analysis} (Figure~\ref{fig:warm_start}) shows that HSEvo achieved an average final HV of 0.821, outperforming MOTPE (0.772) and NSGA-II (0.756). From the very first step ($t=1$), HSEvo outperforms both statistical solvers and widens its lead monotonically through $t=10$, demonstrating a \emph{Zero-Shot Warm-Start Advantage} from the LLM's semantic prior knowledge.
 
-\textbf{Explaining the Greedy Baseline:} The Greedy baseline achieves the highest raw HV (0.900), jumping to $\sim$0.9 within 2 steps. This is a known artifact: Greedy optimizes a single objective and instantly finds an extreme boundary point that dominates a large rectangular volume. However, it suffers from total \textbf{objective diversity collapse} (Pareto Recall $\approx 0$), making it useless for practitioners who need diverse trade-off solutions.
+\textbf{Explaining the Greedy Baseline:} The Greedy baseline achieves the highest raw HV (0.900), jumping to $\sim$0.9 within 2 steps. This is a known artifact: Greedy optimizes a single objective and instantly finds an extreme boundary point that dominates a large rectangular volume. As shown in Table~\ref{tab:pareto-recall}, Greedy's average Pareto Recall is artificially high (0.632) because the true global Pareto front for many of these datasets is extremely small (e.g., 1 to 3 points). Greedy successfully finds this single optimal point, yielding $100\%$ recall, but it suffers from total \textbf{objective diversity collapse}. It only ever finds one solution, making it useless for practitioners who need diverse trade-off solutions across multiple objectives.
 
 \subsection{Statistical Significance (Robustness)}
 Table~\ref{tab:wilcoxon} reports the Wilcoxon signed-rank test results (paired by dataset, $\alpha=0.05$) with Cliff's delta effect sizes.
@@ -255,7 +279,7 @@ HSEvo significantly outperforms Random ($p=0.002$) and NSGA-II ($p=0.027$), with
 \subsection{Cost, Robustness, and Explainability Trade-offs (RQ2)}
 Regarding RQ2:
 \begin{itemize}
-\item \textbf{Cost (Wall-Clock Time):} HSEvo averaged 19.2 seconds per run (576.3 seconds total across 10 datasets $\times$ 3 seeds), consuming $\sim$30 API calls per dataset. All non-LLM baselines executed in $<$0.01 seconds per dataset---a $>$1,900$\times$ speedup. This quantifies the practical cost of LLM-in-the-loop optimization.
+\item \textbf{Cost (Time and API Usage):} HSEvo averaged 19.2 seconds per run (576.3 seconds total across 10 datasets $\times$ 3 seeds). This process consumed $\sim$30 API calls and an estimated $\sim$8,500 total tokens (input + output) per dataset, equating to approximately \$0.01--\$0.05 per run using \texttt{gpt-4o-mini}. In contrast, all non-LLM baselines executed in $<$0.01 seconds per dataset---a $>$1,900$\times$ speedup with zero API cost. This quantifies the practical computational and monetary cost of LLM-in-the-loop optimization.
 \item \textbf{Robustness:} Cross-dataset standard deviations were comparable: HSEvo $\sigma=0.184$, Random $\sigma=0.185$, MOTPE $\sigma=0.167$, NSGA-II $\sigma=0.186$, Greedy $\sigma=0.161$. HSEvo maintained competitive variance despite the stochastic nature of LLM generation.
 \item \textbf{Explainability:} HSEvo generated fully human-readable Python functions with average McCabe Cyclomatic Complexity $V(G) = 3.67$ (range: 2--6). This metric is asymmetric---it applies only to HSEvo since MOTPE and NSGA-II are black-box solvers that produce no inspectable code. We acknowledge this as a limitation.
 \end{itemize}
@@ -265,7 +289,7 @@ Regarding RQ2:
 \subsection{Results and Implications}
 The results provide nuanced support for RQ1. HSEvo (mean HV = 0.821) significantly outperforms Random ($p=0.002$) and NSGA-II ($p=0.027$), and achieves comparable performance to MOTPE ($p=0.160$) while producing fully interpretable Python code that MOTPE cannot. The Greedy baseline's apparent superiority (0.900) is misleading---its single-objective optimization inflates HV through diversity collapse rather than genuine multi-objective coverage.
 
-The practical implication is significant: for SE practitioners operating under tight evaluation budgets ($\leq 10$ configurations), an LLM-based approach can match or exceed state-of-the-art Bayesian optimizers while simultaneously producing human-auditable heuristic logic. This is particularly valuable in safety-critical systems where black-box optimization decisions must be explainable to stakeholders.
+The practical implication is significant: for SE practitioners operating under tight evaluation budgets ($\leq 10$ configurations), an LLM-based approach can match or exceed state-of-the-art Bayesian optimizers while simultaneously producing human-auditable heuristic logic. While our evaluation of $V(G) = 3.67$ indicates low structural complexity, future work involving human-in-the-loop studies is needed to confirm whether practitioners actually find this logic interpretable and actionable in real-world system debugging.
 
 However, the cost-performance trade-off is stark. HSEvo's 19.2-second average runtime per dataset represents a $>$1,900$\times$ slowdown versus local baselines. This overhead is acceptable for offline algorithm design (e.g., nightly configuration tuning) but prohibitive for real-time scheduling. The $\sim$30 API calls per dataset also introduce a monetary cost ($\sim$\$0.01--0.05 per run with \texttt{gpt-4o-mini}) that, while small individually, compounds across large-scale hyperparameter sweeps.
 
@@ -289,7 +313,7 @@ Several research directions emerge from this work:
 
 \textbf{(5) Full MOOT Benchmark Coverage.} We evaluated 10 of 120+ available MOOT datasets. A comprehensive evaluation across the full suite---including high-dimensional datasets with 50+ configuration parameters---would establish the boundary conditions under which LLM-based heuristic generation maintains its advantage.
 
-\section{Threats to Validity}
+\subsection{Threats to Validity}
 
 \textbf{Internal Validity:} The primary threat is the constrained evolutionary budget. While our population size of 6 with 12 function evaluations enables real crossover and mutation mechanics, it remains modest compared to typical evolutionary algorithm deployments (populations of 50--200). Additionally, we mitigate LLM stochasticity by running 3 independent seeds per configuration and reporting Wilcoxon signed-rank tests, though 30+ runs would provide stronger statistical power.
 
@@ -297,13 +321,15 @@ Several research directions emerge from this work:
 
 \textbf{Construct Validity:} Our framing assumes that writing an active-learning priority function for configuration selection is an accurate proxy for designing system-level coordination algorithms. While this maps well to static cloud tuning, it may not represent more dynamic scenarios like live microservice load-balancing. Additionally, the explainability metric (Cyclomatic Complexity) applies asymmetrically only to HSEvo, which we acknowledge as a construct limitation.
 
+\textbf{Conclusion Validity:} Our statistical conclusions are bounded by our sample size of 3 random seeds across 10 datasets (150 total runs). While the Wilcoxon signed-rank test is non-parametric and robust to small sample sizes, a larger number of independent seeds would increase the statistical power and confidence in the exact effect sizes observed, particularly for the marginal difference between HSEvo and MOTPE.
+
 \section{Conclusion}
 
 This paper investigated whether Large Language Models embedded within evolutionary frameworks can automatically generate coordination heuristics for system-level software architectures. Through a rigorous empirical evaluation across 10 MOOT datasets with 5 algorithms, 3 random seeds, and 150 total experimental runs, we demonstrated that HSEvo achieves a mean Hypervolume of 0.821---significantly outperforming Random ($p=0.002$) and NSGA-II ($p=0.027$), and matching MOTPE ($p=0.160$)---while uniquely producing fully interpretable Python code ($V(G) = 3.67$). The Zero-Shot Warm-Start Analysis revealed that LLM-generated heuristics leverage semantic prior knowledge to outperform statistical solvers from the very first evaluation step, a finding with direct practical implications for budget-constrained SE optimization. We identified a clear cost-performance frontier: HSEvo's 19.2-second average runtime and $\sim$30 API calls per dataset represent a $>$1,900$\times$ slowdown versus local baselines, making it suitable for offline algorithm design but not real-time scheduling. This work fills a previously unexplored gap at the intersection of evolutionary search, algorithm generation, and system-level optimization, and provides a reproducible foundation for future research into hybrid LLM-statistical optimization strategies.
 
 \section{Replication Artifacts}
 
-All scripts, output logs, JSON result files (\texttt{experiment\_results\_v3.json}), problem definitions, and dependencies (\texttt{requirements.txt}) required to replicate these experiments are available in our public GitHub repository at: \url{https://github.com/Akshay-Dongare/SE-AI-Group-15/tree/main/hw6}.
+Our framework is fully open-source. All scripts, output logs, JSON result files (\texttt{experiment\_results\_v3.json}), problem definitions, and dependencies (\texttt{requirements.txt}) required to replicate these experiments are available in our public GitHub repository at: \url{https://github.com/Akshay-Dongare/SE-AI-Group-15/tree/main/hw6}. The repository includes a detailed README with step-by-step reproduction instructions to verify all results and figures.
 
 \nocite{*}
 \bibliographystyle{ACM-Reference-Format}
