@@ -53,9 +53,9 @@ This paper makes the following contributions:
 
 \section{Background and Motivation}
 
-Modern software systems increasingly rely on dynamic coordination across distributed components. Examples include microservices routing, load balancing, and multi-agent orchestration. Designing optimal coordination logic in such systems is notoriously difficult due to two major factors: (1) \textbf{Combinatorial Complexity:} The configuration space of system parameters is often massive and non-linear. (2) \textbf{Dynamic Environments:} Workloads and hardware constraints change frequently, meaning a static coordination algorithm designed by a human engineer will quickly degrade in performance.
+\textbf{Problem Statement:} The problem addressed in this paper is the high cost, brittleness, and poor scalability of manually tuning system coordination logic. As modern software systems (e.g., microservices, multi-agent workflows) grow in complexity, hand-crafted static algorithms fail to adapt to dynamic workloads and massive configuration spaces. This results in sub-optimal system performance and significant engineering overhead. Therefore, there is a critical need for automated approaches to generate adaptive coordination heuristics.
 
-Given these challenges, the motivation for this work is to determine if Large Language Models (LLMs) can automate the design of these coordination heuristics. LLMs possess deep internal representations of code logic and optimization principles, making them strong candidates for writing active-learning algorithms that adapt to new datasets. We refer to these as \textbf{active-learning configuration heuristics}---algorithms that iteratively select the most informative system configurations to test based on prior observations. 
+Given these challenges, the motivation for this work is to determine if Large Language Models (LLMs) can solve this problem by automating the design of these coordination heuristics. LLMs possess deep internal representations of code logic and optimization principles, making them strong candidates for writing active-learning algorithms that adapt to new datasets. We refer to these as \textbf{active-learning configuration heuristics}---algorithms that iteratively select the most informative system configurations to test based on prior observations. 
 
 To ensure realistic evaluation, we target tasks from the MOOT (Multi-Objective Optimization Tasks) repository. The MOOT data is derived from heavily-cited software engineering research published at top-tier venues (e.g., ICSE, ASE, TSE). These datasets represent valid, real-world software configuration and system tuning scenarios, grounding our framework in practical software engineering problems rather than abstract theoretical constructs.
 
@@ -150,6 +150,8 @@ D = \frac{1}{|P|} \sum_{p \in P} \sqrt{\sum_{i=1}^{M} (p_i - p_{ideal, i})^2}
 \]
 where $P$ is the set of non-dominated configurations (the Pareto front) discovered by the heuristic after the evaluation budget is exhausted, and $M$ is the number of objectives. A lower distance indicates better performance. This metric was chosen over Hypervolume as it does not require a sensitive reference point and accurately captures the geometric convergence to the theoretical optimum.
 
+\textbf{Secondary Metrics (Cost, Robustness, and Explainability):} To address RQ2, we define three qualitative and quantitative metrics: (1) \textbf{Cost} is measured in total API calls per generation and the corresponding wall-clock execution time. (2) \textbf{Robustness} is measured by the framework's resistance to premature population collapse and the syntactical validity rate of the generated Python code. (3) \textbf{Explainability} is evaluated qualitatively by whether the resulting coordination algorithm is human-readable, executable Python code (as opposed to opaque model weights).
+
 \subsection{Hyperparameters and Selection Justification}
 
 The evolutionary logic was driven by HSEvo \cite{dat2025hsevo} using the \texttt{gpt-4o-mini-2024-07-18} model. The following hyperparameters were used:
@@ -170,6 +172,7 @@ The evolutionary logic was driven by HSEvo \cite{dat2025hsevo} using the \texttt
 Our experimental design directly addresses our Research Questions:
 \begin{itemize}
 \item \textbf{Addressing RQ1:} We execute the LLM-generated heuristics on 5 MOOT datasets and record the Normalized Pareto Distance. We compare these results against two static baselines (Random and Greedy) under the exact same evaluation budget (10 steps) and random seed (42).
+\item \textbf{Addressing Alternative Baselines:} While our study focuses on Random and Greedy baselines to establish foundational lower bounds under strict compute budgets, a review of the literature reveals several other non-LLM baselines commonly used in related work. These include Bayesian Optimization methods (e.g., Tree-structured Parzen Estimator (TPE), Upper Confidence Bound (UCB)) and classic evolutionary operators (e.g., one-point crossover) \cite{menzies2024moot, zhou2022ape, meyerson2024crossover}. Future work should expand the baseline comparison to include these robust statistical methods.
 \item \textbf{Addressing RQ2:} We monitor the framework execution, recording API usage, syntactical failure rates, and real-world runtimes to analyze the cost and robustness trade-offs of using LLMs in the loop.
 \end{itemize}
 
