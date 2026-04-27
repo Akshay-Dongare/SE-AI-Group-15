@@ -172,16 +172,30 @@ The evolutionary logic was driven by HSEvo \cite{dat2025hsevo} using the \texttt
 \end{itemize}
 
 \textbf{Hyperparameter Selection Justification:} A population size of 6 with 12 function evaluations across 2 evolutionary iterations provides sufficient genetic diversity for real crossover and mutation mechanics while remaining within practical API budget constraints ($\sim$30 LLM API calls per dataset). The temperature of 0.7 balances syntactic validity with creative heuristic exploration. The evaluation budget of 100 active-learning steps (with analysis starting from $t=10$) allows us to observe both initial warm-start performance and long-term convergence.
-
 \subsection{Experimental Design and RQ Alignment}
 
-Our experimental design is explicitly structured to address all goals outlined in our Research Questions:
-\begin{itemize}
-\item \textbf{Addressing RQ1 (Performance against Baselines):} To answer whether LLMs can generate superior heuristics, we designed a comparative experiment. We execute the LLM-generated heuristics across 10 diverse MOOT datasets and record the step-by-step Hypervolume. We compare these results directly against two static baselines (Random and Greedy) and two state-of-the-art statistical solvers (MOTPE and NSGA-II). We utilize a dual-budget evaluation strategy: (1) a \textbf{short-budget regime (10 steps)} to analyze Zero-Shot Warm-Start capability, and (2) a \textbf{long-budget regime (100 steps)} to assess asymptotic convergence and Pareto front recovery. This isolates the algorithmic generation capability as the sole independent variable across both immediate and long-term optimization horizons.
-\item \textbf{Addressing Alternative Baselines:} While our study originally focused on Random and Greedy baselines, a review of the literature revealed several other non-LLM baselines commonly used. To ensure empirical rigor, our experimental design incorporates Tree-structured Parzen Estimator (MOTPE) and Non-dominated Sorting Genetic Algorithm (NSGA-II). We specifically selected MOTPE and NSGA-II because they represent the standard continuous and evolutionary optimization baselines widely deployed in the literature from which the MOOT benchmark derives. We acknowledge that FLASH and DODGE are also state-of-the-art baselines tailored explicitly by the MOOT authors for software configuration tasks; we omit them here due to framework integration constraints but identify their inclusion as a critical direction for future work.
-\item \textbf{Addressing RQ2 (Trade-offs):} To answer what trade-offs exist, our experimental design monitors the end-to-end framework execution. We actively record API token usage and latency (to measure Cost), calculate Hypervolume variance across the 10 datasets (to measure Robustness), and analyze the generated Python source code via McCabe's Cyclomatic Complexity (to measure Explainability/Interpretability).
-\end{itemize}
+Our experimental design is structured to directly address the research questions.
 
+\textbf{RQ1: Performance Against Baselines.}
+We evaluate whether LLMs can generate superior heuristics through a controlled comparative study. LLM-generated heuristics are executed across 10 diverse MOOT datasets, with step-wise Hypervolume (HV) recorded throughout the optimization process. Performance is compared against two static baselines (Random, Greedy) and two state-of-the-art statistical solvers (MOTPE, NSGA-II).
+
+To capture both early-stage behavior and long-term performance, we employ a dual-budget evaluation strategy:
+\begin{itemize}
+    \item \textbf{Short-budget regime (10 steps):} Evaluates Zero-Shot Warm-Start capability.
+    \item \textbf{Long-budget regime (100 steps):} Assesses asymptotic convergence and Pareto front recovery.
+\end{itemize}
+This design isolates algorithmic generation as the primary independent variable across both immediate and extended optimization horizons.
+
+\textbf{Baseline Selection.}
+In addition to Random and Greedy baselines, we include MOTPE and NSGA-II to ensure empirical rigor. These methods represent widely adopted Bayesian and evolutionary optimization techniques in the literature underlying the MOOT benchmark. While FLASH and DODGE are also strong baselines specifically tailored for software configuration tasks, they are not included due to integration constraints; we identify their inclusion as an important direction for future work.
+
+\textbf{RQ2: Trade-off Analysis.}
+To analyze trade-offs, we instrument the full execution pipeline and measure:
+\begin{itemize}
+    \item \textbf{Cost:} API token usage and wall-clock latency.
+    \item \textbf{Robustness:} Variance in Hypervolume across datasets.
+    \item \textbf{Explainability:} Structural complexity of generated heuristics using McCabe's Cyclomatic Complexity.
+\end{itemize}
 \subsection{Replicability and Execution Runtimes}
 
 To ensure replicability, we tracked the exact runtimes and execution environments. The experiments were executed on an M4 MacBook Air (24GB RAM) running macOS with Python 3.13. The self-contained execution script \texttt{run\_experiments\_v3.py} completely automates the evaluation pipeline.
