@@ -556,30 +556,29 @@ Several research directions emerge from this work:
 \section{Conclusion}
 
 This paper demonstrated that LLMs embedded within evolutionary
-frameworks can automatically generate effective coordination
-heuristics for system-level software architectures—filling a
-gap that our structured bibliometric analysis confirmed is
-currently unexplored at the intersection of evolutionary
-search, algorithm generation, and system-level optimization.
-Across 150 experimental runs spanning 10 MOOT datasets,
-HSEvo matched state-of-the-art Bayesian optimization (MOTPE,
-$p = 0.160$) while significantly outperforming NSGA-II and
-Random ($p < 0.05$), and uniquely produced interpretable
-Python heuristics with low structural complexity ($V(G) =
-3.67$). The central practical finding is the Zero-Shot
-Warm-Start Advantage: LLM semantic priors enable superior
-heuristic quality from the very first evaluation step—a
-property no purely statistical solver can replicate. The
-cost is quantified and real: a $>$1,900$\times$ runtime
-overhead positions HSEvo firmly in the offline algorithm
-design tier. The boundary conditions are equally clear: on
-datasets with degenerate single-point Pareto fronts (redis,
-pom3a), multi-objective heuristics of any kind fail,
-motivating objective-correlation pre-screening as a
-practical safeguard. The field's most promising direction
-is hybrid strategies that use LLM-generated heuristics to
-warm-start statistical surrogates—combining the semantic
-intelligence and interpretability of the former with the
+frameworks can automatically generate effective active-learning
+heuristics for multi-objective software engineering optimization
+tasks---filling a gap that our structured bibliometric analysis
+confirmed is currently unexplored at the intersection of
+evolutionary search, algorithm generation, and system-level
+optimization. Across 150 experimental runs spanning 10 MOOT
+datasets, HSEvo matched state-of-the-art Bayesian optimization
+(MOTPE, $p = 0.160$) while significantly outperforming NSGA-II
+and Random ($p < 0.05$), and uniquely produced interpretable
+Python heuristics with low structural complexity ($V(G) = 3.67$).
+The central practical finding is the Zero-Shot Warm-Start
+Advantage: LLM semantic priors enable superior heuristic quality
+from the very first evaluation step---a property no purely
+statistical solver can replicate. The cost is quantified and
+real: a $>$5{,}000$\times$ runtime overhead positions HSEvo
+firmly in the offline algorithm design tier. The boundary 
+conditions are equally clear: on datasets with degenerate 
+single-point Pareto fronts (redis, pom3a), multi-objective 
+heuristics of any kind fail, motivating objective-correlation 
+pre-screening as a practical safeguard. The field's most 
+promising direction is hybrid strategies that use LLM-generated 
+heuristics to warm-start statistical surrogates—combining the 
+semantic intelligence and interpretability of the former with the 
 asymptotic efficiency of the latter.
 
 \section{Replication Artifacts}
