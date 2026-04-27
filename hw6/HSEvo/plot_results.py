@@ -2,7 +2,8 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 
-with open('experiment_results_v3.json', 'r') as f:
+# Use the correct renamed results file
+with open('experiment_results.json', 'r') as f:
     data = json.load(f)
 
 datasets = list(data.keys())
@@ -23,12 +24,13 @@ num = len(datasets) * len(seeds)
 for a in algs:
     avg_ts[a] /= num
 
+# ─── Figure 3: Full 100-step Convergence ───
 fig, ax = plt.subplots(figsize=(10, 6))
 for a in algs:
     ax.plot(range(1, 101), avg_ts[a], marker=markers[a], label=labels[a], 
-            color=colors[a], linewidth=2, markersize=4)
+            color=colors[a], linewidth=2, markersize=4, markevery=5)
 
-ax.set_title('Zero-Shot Warm-Start Analysis\n(Average Hypervolume vs. Active-Learning Step, pop_size=6, 3 seeds)', 
+ax.set_title('Full Budget Convergence Analysis\n(Average Hypervolume vs. Active-Learning Step, pop_size=6, 3 seeds)', 
              fontsize=13, fontweight='bold')
 ax.set_xlabel('Active-Learning Step (Evaluation Budget)', fontsize=12)
 ax.set_ylabel('Average Hypervolume', fontsize=12)
@@ -38,5 +40,25 @@ ax.legend(fontsize=11, loc='lower right')
 ax.set_ylim(0.55, 1.0)
 
 plt.tight_layout()
+plt.savefig('fig3_full_convergence.pdf', dpi=300)
 plt.savefig('crossover_analysis.png', dpi=300)
-print("Plot saved to crossover_analysis.png")
+print("Plot saved to fig3_full_convergence.pdf and crossover_analysis.png")
+
+# ─── Figure 2: 10-step Warm-Start Zoom ───
+fig2, ax2 = plt.subplots(figsize=(8, 5))
+for a in algs:
+    ax2.plot(range(1, 11), avg_ts[a][:10], marker=markers[a], label=labels[a], 
+             color=colors[a], linewidth=2, markersize=6)
+
+ax2.set_title('Zero-Shot Warm-Start Analysis (Initial 10 Steps)\nLLM Semantic Prior Advantage', 
+              fontsize=13, fontweight='bold')
+ax2.set_xlabel('Active-Learning Step', fontsize=12)
+ax2.set_ylabel('Average Hypervolume', fontsize=12)
+ax2.set_xticks(range(1, 11))
+ax2.grid(True, alpha=0.3)
+ax2.legend(fontsize=11, loc='lower right')
+ax2.set_ylim(0.55, 0.9)
+
+plt.tight_layout()
+plt.savefig('fig2_warm_start_zoom.pdf', dpi=300)
+print("Plot saved to fig2_warm_start_zoom.pdf")

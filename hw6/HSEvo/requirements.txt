@@ -24,3 +24,7 @@ networkx
 joblib
 numba
 torch
+optuna
+pymoo
+matplotlib
+pandas
