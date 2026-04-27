@@ -252,7 +252,7 @@ pom3a   & 0.000 & \textbf{1.000} & 0.083 & 0.083 & 0.083 \\
   \label{fig:warm_start}
 \end{figure}
 
-The \textbf{Zero-Shot Warm-Start Analysis} (Figure~\ref{fig:warm_start}) shows that HSEvo achieved an average final HV of 0.821, outperforming MOTPE (0.772) and NSGA-II (0.756). From the very first step ($t=1$), HSEvo outperforms both statistical solvers and widens its lead monotonically through $t=10$, demonstrating a \emph{Zero-Shot Warm-Start Advantage} from the LLM's semantic prior knowledge.
+The \textbf{Zero-Shot Warm-Start Analysis} (Figure~\ref{fig:warm_start}) shows that HSEvo achieved an average final HV of 0.921, outperforming MOTPE (0.903) and NSGA-II (0.853). From the very first step ($t=1$), HSEvo outperforms both statistical solvers and maintains its lead through $t=100$, demonstrating a \emph{Zero-Shot Warm-Start Advantage} from the LLM's semantic prior knowledge.
 
 \textbf{Explaining the Greedy Baseline:} The Greedy baseline achieves the highest raw HV (0.959), jumping to $\sim$0.9 within 2 steps. This is a known artifact: Greedy optimizes a single objective and instantly finds an extreme boundary point that dominates a large rectangular volume. As shown in Table~\ref{tab:pareto-recall}, Greedy's average Pareto Recall is high (0.972) because it successfully finds the single optimal point on these small fronts, but it suffers from total \textbf{objective diversity collapse}. It only ever finds one solution, making it useless for practitioners who need diverse trade-off solutions across multiple objectives.
 
@@ -289,7 +289,7 @@ Regarding RQ2:
 \section{Discussion}
 
 \subsection{Results and Implications}
-The results provide nuanced support for RQ1. HSEvo (mean HV = 0.821) significantly outperforms Random ($p=0.002$) and NSGA-II ($p=0.027$), and achieves comparable performance to MOTPE ($p=0.160$) while producing fully interpretable Python code that MOTPE cannot. The Greedy baseline's apparent superiority (0.900) is misleading---its single-objective optimization inflates HV through diversity collapse rather than genuine multi-objective coverage.
+The results provide nuanced support for RQ1. HSEvo (mean HV = 0.921) significantly outperforms Random and NSGA-II ($p<0.05$), and achieves comparable performance to MOTPE ($p=0.160$) while producing fully interpretable Python code that MOTPE cannot. The Greedy baseline's apparent superiority (0.959) is misleading---its single-objective optimization inflates HV through diversity collapse rather than genuine multi-objective coverage.
 
 The practical implication is significant: for SE practitioners operating under tight evaluation budgets ($\leq 10$ configurations), an LLM-based approach can match or exceed state-of-the-art Bayesian optimizers while simultaneously producing human-auditable heuristic logic. While our evaluation of $V(G) = 3.67$ indicates low structural complexity, future work involving human-in-the-loop studies is needed to confirm whether practitioners actually find this logic interpretable and actionable in real-world system debugging.
 
