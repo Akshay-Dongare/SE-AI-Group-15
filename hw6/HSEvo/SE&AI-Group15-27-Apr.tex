@@ -1,6 +1,6 @@
 \documentclass[sigconf,nonacm]{acmart}
 
-\title{Evolutionary LLMs for Automated Coordination Algorithm Design in System-Level Architectures}
+\title{Evolutionary LLMs for Automated Heuristic Generation in Multi-Objective Software Engineering Optimization}
 \subtitle{Group 15}
 
 \author{Akshay Dongare}
@@ -38,9 +38,9 @@ To ensure realism and generalizability, we evaluate our approach using the MOOT 
 
 \section{Research Questions}
 
-\textbf{RQ1:} Can an LLM embedded within an evolutionary framework automatically generate and evolve superior configuration heuristics for system-level architectures compared to static heuristic baselines?
+\noindent\textbf{RQ1:} Can an LLM embedded within an evolutionary framework automatically generate and evolve superior configuration heuristics for system-level architectures compared to static heuristic baselines?
 
-\textbf{RQ2:} What trade-offs exist in cost (wall-clock time and API calls), robustness (cross-dataset variance), and interpretability (Cyclomatic Complexity) when using evolutionary LLM frameworks under constrained compute budgets?
+\noindent\textbf{RQ2:} What trade-offs exist in cost (wall-clock time and API calls), robustness (cross-dataset variance), and interpretability (Cyclomatic Complexity) when using evolutionary LLM frameworks under constrained compute budgets?
 
 \section{Contributions}
 
@@ -480,27 +480,39 @@ and we identify scaling to 10+ seeds as a priority for future
 replication to resolve this uncertainty. HSEvo significantly underperforms Greedy ($p=0.010$, medium negative $\delta=-0.420$), but as discussed above, Greedy's high HV is an artifact of diversity collapse.
 
 \subsection{Cost, Robustness, and Explainability Trade-offs (RQ2)}
-Regarding RQ2:
-\begin{itemize}
-\item \textbf{Cost (Time and API Usage):} HSEvo averaged 19.2 seconds per run (576.3 seconds total across 10 datasets $\times$ 3 seeds). This process consumed $\sim$30 API calls and an estimated $\sim$8,500 total tokens (input + output) per dataset, equating to approximately \$0.01--\$0.05 per run using \texttt{gpt-4o-mini}. In contrast, all non-LLM baselines executed in $<$0.01 seconds per dataset---a $>$1,900$\times$ speedup with zero API cost. This quantifies the practical computational and monetary cost of LLM-in-the-loop optimization.
 
-The runtime profile has direct implications for the
-\emph{practicality} of the remaining research agenda. At
-53.9 seconds per dataset, a full sweep across all 120+ MOOT
-datasets with 10 seeds each would require approximately
-$120 \times 10 \times 53.9 = 64{,}680$ seconds ($\sim$18 
-hours) at an estimated cost of \$6--\$30 in API fees---a
-feasible but non-trivial investment. Scaling to larger
-evolutionary populations (e.g., 50 individuals, 100
-function evaluations) would multiply this by $\sim$8$\times$,
-pushing a full benchmark sweep to $\sim$6 days. This
-constrains realistic deployment to offline, nightly
-optimization pipelines rather than interactive or real-time
-system tuning---a boundary condition practitioners should
-account for before adoption.
-\item \textbf{Robustness:} Robustness across independent seeds was highly competitive under the 100-step budget. The mean per-dataset cross-seed standard deviation was: Greedy (0.000), HSEvo (0.017), MOTPE (0.017), Random (0.023), and NSGA-II (0.033). HSEvo's low cross-seed variance ($\sigma=0.017$) indicates that the generated heuristics are exceptionally stable and repeatable for the same problem, perfectly matching the stability of state-of-the-art Bayesian optimizers.
-\item \textbf{Explainability:} HSEvo generated fully human-readable Python functions with average McCabe Cyclomatic Complexity $V(G) = 3.67$ (range: 2--6). McCabe's guidelines classify $V(G) \leq 10$ as simple and easily testable, suggesting HSEvo's generated heuristics are structurally simple enough for human review and modification. This metric is asymmetric---it applies only to HSEvo since MOTPE and NSGA-II are black-box solvers that produce no inspectable code. We acknowledge this as a limitation.
-\end{itemize}
+\textbf{Cost (Time and API Usage).} HSEvo averaged 53.9 seconds
+per run (538.8 seconds total across 10 datasets $\times$ 3 seeds),
+consuming $\sim$30 API calls and $\sim$8,500 total tokens per
+dataset---equating to approximately \$0.01--\$0.05 per run using
+\texttt{gpt-4o-mini}. Non-LLM baselines executed in $<$0.01
+seconds per dataset, a $>$5{,}000$\times$ speedup at zero API
+cost. These runtimes have direct implications for research
+practicality: a full sweep across all 120+ MOOT datasets with 10
+seeds would require $\sim$18 hours and \$6--\$30 in API fees.
+Scaling to larger evolutionary populations (50 individuals, 100
+function evaluations) multiplies this by $\sim$8$\times$, pushing
+a full benchmark sweep to $\sim$6 days. This constrains realistic
+deployment to offline, nightly optimization pipelines---a boundary
+condition practitioners must account for before adoption.
+
+\textbf{Robustness.} Cross-seed variance was highly competitive
+under the 100-step budget. Mean per-dataset cross-seed standard
+deviation: Greedy (0.000), HSEvo (0.017), MOTPE (0.017), Random
+(0.023), and NSGA-II (0.033). HSEvo's low variance ($\sigma=0.017$)
+confirms that generated heuristics are stable and repeatable,
+perfectly matching the consistency of state-of-the-art Bayesian
+optimizers despite the stochastic nature of LLM code generation.
+
+\textbf{Explainability.} HSEvo produced fully human-readable
+Python functions with average McCabe Cyclomatic Complexity
+$V(G) = 3.67$ (range: 2--6). McCabe's guidelines classify
+$V(G) \leq 10$ as simple and easily testable, indicating that
+HSEvo's heuristics are structurally transparent enough for
+practitioner review and modification. This metric is
+asymmetric---it applies only to HSEvo, since MOTPE and NSGA-II
+are black-box numerical solvers that produce no inspectable
+code---an acknowledged limitation we revisit in Section~7.
 
 \section{Discussion}
 
@@ -509,7 +521,7 @@ The results provide nuanced support for RQ1. HSEvo (mean HV = 0.921) significant
 
 The practical implication is significant: for SE practitioners operating under tight evaluation budgets ($\leq 10$ configurations), an LLM-based approach can match or exceed state-of-the-art Bayesian optimizers while simultaneously producing human-auditable heuristic logic. While our evaluation of $V(G) = 3.67$ indicates low structural complexity, future work involving human-in-the-loop studies is needed to confirm whether practitioners actually find this logic interpretable and actionable in real-world system debugging.
 
-However, the cost-performance trade-off is stark. HSEvo's 19.2-second average runtime per dataset represents a $>$1,900$\times$ slowdown versus local baselines. This overhead is acceptable for offline algorithm design (e.g., nightly configuration tuning) but prohibitive for real-time scheduling. The $\sim$30 API calls per dataset also introduce a monetary cost ($\sim$\$0.01--0.05 per run with \texttt{gpt-4o-mini}) that, while small individually, compounds across large-scale hyperparameter sweeps.
+However, the cost-performance trade-off is stark. HSEvo's 53.9-second average runtime per dataset represents a $>$5{,}000$\times$ slowdown versus local baselines. This overhead is acceptable for offline algorithm design (e.g., nightly configuration tuning) but prohibitive for real-time scheduling. The $\sim$30 API calls per dataset also introduce a monetary cost ($\sim$\$0.01--0.05 per run with \texttt{gpt-4o-mini}) that, while small individually, compounds across large-scale hyperparameter sweeps.
 
 \subsection{Limitations}
 \begin{itemize}
