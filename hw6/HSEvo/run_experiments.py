@@ -12,11 +12,12 @@ import os
 import sys
 import json
 import time
+import argparse
 import optuna
 from pymoo.indicators.hv import HV
 
 # ─── Configuration ───
-DATASETS = {
+DATASETS_ALL = {
     "SS-B":     "datasets/SS-B.csv",
     "auto93":   "datasets/auto93.csv",
     "pom3d":    "datasets/pom3d.csv",
@@ -29,8 +30,29 @@ DATASETS = {
     "pom3a":    "../../moot/optimize/process/pom3a.csv"
 }
 
+# Defaults
 NUM_EVALUATIONS = 100
-SEEDS = [42, 123, 7]  # 3 seeds for statistical testing
+SEEDS = [42, 123, 7]
+POP_SIZE = 6
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--datasets", type=str, default="all")
+    parser.add_argument("--seeds", type=int, nargs="+", default=[42, 123, 7])
+    parser.add_argument("--budget", type=int, default=100)
+    parser.add_argument("--pop_size", type=int, default=6)
+    return parser.parse_args()
+
+args = parse_args()
+NUM_EVALUATIONS = args.budget
+SEEDS = args.seeds
+POP_SIZE = args.pop_size
+
+if args.datasets == "all":
+    DATASETS = DATASETS_ALL
+else:
+    names = args.datasets.split(",")
+    DATASETS = {k: DATASETS_ALL[k] for k in names if k in DATASETS_ALL}
 
 def load_dataset(path):
     with open(path, 'r') as f:
@@ -292,8 +314,8 @@ if __name__ == "__main__":
         "python3.13", "main.py",
         "problem=moot",
         "algorithm=hsevo",
-        "pop_size=6",
-        "init_pop_size=6",
+        f"pop_size={POP_SIZE}",
+        f"init_pop_size={POP_SIZE}",
         "max_fe=12",
         "temperature=0.7",
         "timeout=120",

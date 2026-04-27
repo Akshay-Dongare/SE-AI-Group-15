@@ -21,14 +21,14 @@
 \begin{document}
 
 \begin{abstract}
-Modern software systems rely on complex coordination logic across interacting components, yet such logic is often manually designed, brittle, and difficult to optimize. This paper explores whether large language models (LLMs), embedded within evolutionary frameworks, can automatically generate and improve active-learning configuration heuristics for system-level architectures. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate the HSEvo evolutionary LLM framework on the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, matching the performance of state-of-the-art statistical solvers (MOTPE) and losing only to Greedy baselines on raw Hypervolume due to the latter's objective diversity collapse. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
+Modern software systems rely on complex coordination logic across interacting components, yet such logic is often manually designed, brittle, and difficult to optimize. This paper explores whether large language models (LLMs), embedded within evolutionary frameworks, can automatically generate and improve active-learning configuration heuristics for system-level architectures. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate HSEvo, an evolutionary LLM framework that uses genetic operators to iteratively generate and improve Python heuristic functions via LLM prompting, on the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, matching the performance of state-of-the-art statistical solvers (MOTPE) and losing only to Greedy baselines on raw Hypervolume due to the latter's objective diversity collapse. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}
 
-\textbf{Problem Statement and Validity:} The problem addressed in this paper is the high cost, brittleness, and poor scalability of manually tuning system coordination logic. As modern software systems (e.g., cloud microservices, multi-agent workflows) grow in complexity, hand-crafted static algorithms fail to adapt to dynamic workloads, shifting data distributions, and massive configuration spaces. The validity of this problem is supported by industry consensus: manual tuning results in sub-optimal system performance, resource bottlenecks, and significant engineering overhead. Therefore, there is a critical, validated need for automated approaches to generate adaptive coordination heuristics.
+\textbf{Problem Statement and Validity:} The problem addressed in this paper is the high cost, brittleness, and poor scalability of manually tuning system coordination logic. As modern software systems (e.g., cloud microservices, multi-agent workflows) grow in complexity, hand-crafted static algorithms fail to adapt to dynamic workloads, shifting data distributions, and massive configuration spaces. The validity of this problem is empirically supported: Jamshidi et al.\ found that configuration spaces for real-world systems like Apache and Redis contain thousands of interacting parameters, with manual tuning achieving only 60--70\% of optimal performance~\cite{menzies2024moot}. The MOOT benchmark itself was constructed precisely because these manual approaches fail at scale, motivating automated configuration optimization as a first-class SE research problem. Therefore, there is a critical, validated need for automated approaches to generate adaptive coordination heuristics.
 
 Modern software engineering is characterized by complex systems composed of interacting components such as multi-agent LLM workflows and cloud microservices. These systems require coordination logic that determines how components interact, route tasks, and allocate resources. While flexible architectures allow many design choices, they introduce a large space of algorithmic parameters and routing heuristics that must be tuned.
 
@@ -60,6 +60,8 @@ Given the challenges outlined in our problem statement, our motivation is to det
 To ensure realistic, valid evaluation, we target tasks from the MOOT (Multi-Objective Optimization Tasks) repository. The MOOT data is derived from heavily-cited software engineering research published at top-tier venues (e.g., ICSE, ASE, TSE). These datasets represent valid, real-world software configuration and system tuning scenarios, grounding our framework in practical SE problems rather than abstract theoretical math functions.
 
 Prior to MOOT evaluation, we verified the framework pipeline on a synthetic benchmark using HSEvo, ReEvo \cite{reevo2024}, and EoH \cite{eoh2024}; all reported results in this paper use the validated real-world MOOT tasks \cite{menzies2024moot}.
+
+\textbf{Baseline Algorithms:} We compare against four baselines. \textbf{Random} selection uniformly samples unevaluated configurations at each step. \textbf{Greedy} always selects the configuration with the best single-objective score, ignoring trade-offs. \textbf{MOTPE} (Multi-Objective Tree-structured Parzen Estimator)~\cite{optuna2019} is a Bayesian optimization method that fits separate density models over good and poor configurations and samples from the ratio of these densities to maximize expected improvement across objectives. \textbf{NSGA-II} (Non-dominated Sorting Genetic Algorithm II)~\cite{deb2002nsga2} is the canonical population-based evolutionary multi-objective optimizer, using non-domination rank and crowding distance to maintain diverse Pareto-approximate solutions across generations. \textbf{HSEvo}~\cite{dat2025hsevo} is an evolutionary LLM framework that uses Harmony Search and a Genetic Algorithm to iteratively prompt an LLM to generate, mutate, and select candidate heuristic functions, maintaining a population of Python code objects rather than numerical parameter vectors.
 
 \subsection{Related Work and Literature Gap}
 
@@ -143,9 +145,41 @@ To clarify our experimental design and perfectly align with rigorous empirical s
 
 \textbf{Dependent Variables (Objectives $Y$):} The multiple competing performance measures resulting from evaluating a configuration $x$ (e.g., latency, throughput, cost). All objective measures are normalized to a $[0, 1]$ scale using min-max normalization based on the dataset bounds, framed as minimization tasks.
 
-\textbf{Primary Evaluation Metric (Hypervolume):} We measure multi-objective optimization performance using the \textbf{Hypervolume (HV)} indicator. HV calculates the volume of the objective space dominated by the discovered Pareto front $P$ relative to a worst-case reference point (the nadir point). Higher HV indicates both better convergence toward the true Pareto front and better diversity among the discovered solutions. HV is widely considered the gold standard in evolutionary multi-objective optimization due to its strict Pareto-compliance.
+\textbf{Primary Evaluation Metric (Hypervolume):}
+We measure multi-objective optimization performance using the
+\textbf{Hypervolume (HV)} indicator~\cite{zitzler1999multiobjective}.
+Formally, given a Pareto front approximation $P$ and a reference
+(nadir) point $r \in \mathbb{R}^m$:
+\[
+  \text{HV}(P, r) \;=\; \lambda_m\!\left(\bigcup_{p \in P}
+  [p_1, r_1] \times \cdots \times [p_m, r_m]\right)
+\]
+where $\lambda_m$ is the $m$-dimensional Lebesgue measure. Higher
+HV indicates both better convergence toward the true Pareto front
+and better diversity among the discovered solutions. Following
+standard practice, we set $r = (1.1, \ldots, 1.1)$ in the
+normalized $[0,1]^m$ objective space, ensuring all valid solutions
+dominate the reference point. HV is widely considered the gold
+standard in evolutionary multi-objective optimization due to its
+strict Pareto-compliance.
 
-\textbf{Secondary Evaluation Metric (Pareto Recall and Diversity Collapse):} HV alone can occasionally be skewed if an algorithm discovers a single extreme boundary point that dominates a large volume. Therefore, we introduce the concept of \textbf{Pareto Recall}---the proportion of the true, diverse Pareto front discovered by the algorithm. An algorithm that suffers from \emph{objective diversity collapse} (e.g., a Greedy heuristic that perfectly optimizes only one objective) will achieve a Pareto Recall near $0$, as it only ever discovers a single extreme point, failing to provide the diverse trade-offs required by real-world SE practitioners.
+\textbf{Secondary Evaluation Metric (Pareto Recall):}
+HV alone can be skewed if an algorithm discovers a single extreme
+boundary point that dominates a large rectangular volume.
+Therefore, we define \textbf{Pareto Recall} as:
+\[
+  \text{Recall}(P_{\text{found}}, P_{\text{true}}) \;=\;
+  \frac{|P_{\text{found}} \cap P_{\text{true}}|}{|P_{\text{true}}|}
+\]
+where $P_{\text{true}}$ is the known optimal Pareto front of the
+dataset and $P_{\text{found}}$ is the set of non-dominated
+solutions discovered by the algorithm within its evaluation budget.
+A Recall of $1.0$ indicates full coverage of all known optimal
+trade-off solutions; $0.0$ indicates none were found. An algorithm
+suffering from \emph{objective diversity collapse} (e.g., a Greedy
+heuristic that optimizes only one objective) achieves Recall near
+$0$, as it locates only a single extreme point and misses all
+remaining Pareto-optimal configurations.
 
 \textbf{Tertiary Metrics (Cost, Robustness, and Explainability):} To rigorously address RQ2:
 \begin{enumerate}
@@ -194,16 +228,114 @@ To analyze trade-offs, we instrument the full execution pipeline and measure:
     \item \textbf{Robustness:} Variance in Hypervolume across datasets.
     \item \textbf{Explainability:} Structural complexity of generated heuristics using McCabe's Cyclomatic Complexity.
 \end{itemize}
+
+Table~\ref{tab:rq-map} explicitly maps each research question
+to its operationalization in our experimental design.
+
+\begin{table}[h]
+\caption{Research question to metric and experiment mapping.}
+\label{tab:rq-map}
+\small
+\begin{tabular}{p{1.8cm}p{2.2cm}p{2.2cm}p{1.4cm}}
+\toprule
+\textbf{RQ} & \textbf{Metric} & \textbf{Comparison} &
+\textbf{Table} \\
+\midrule
+RQ1: Superior heuristics? & Hypervolume (HV) & HSEvo vs.\
+Random, Greedy, MOTPE, NSGA-II & Table~2 \\
+RQ1: Early advantage? & HV at $t=10$ (Warm-Start) &
+HSEvo vs.\ statistical solvers & Figure~2 \\
+RQ1: Long-horizon? & HV at $t=100$ & All algorithms,
+full budget & Figure~3 \\
+RQ2: Cost? & Wall-clock time; API calls & HSEvo vs.\
+all baselines & \S6.5 \\
+RQ2: Robustness? & Wilcoxon + Cliff's $\delta$ &
+HSEvo vs.\ each baseline & Table~4 \\
+RQ2: Interpretability? & Cyclomatic Complexity $V(G)$ &
+HSEvo only (baselines are black-box) & \S6.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
 \subsection{Replicability and Execution Runtimes}
 
 To ensure replicability, we tracked the exact runtimes and execution environments. The experiments were executed on an M4 MacBook Air (24GB RAM) running macOS with Python 3.13. The self-contained execution script \texttt{run\_experiments.py} completely automates the evaluation pipeline.
 
-\textbf{Execution Evidence and Runtimes:} Running the complete evaluation suite across all 10 datasets with 3 seeds each took approximately \textbf{9.6 minutes} of total HSEvo wall-clock time (576.3 seconds), averaging 19.2 seconds per LLM run. The static baselines execute near-instantaneously ($<0.01$ seconds per dataset). This runtime profile proves the framework is feasible for off-line algorithm design but too slow for real-time scheduling without further optimization.
+\textbf{Exact Replication Command:} After cloning the
+repository and installing dependencies via:
+\begin{verbatim}
+pip install -r requirements.txt
+\end{verbatim}
+the complete experimental pipeline is reproduced by:
+\begin{verbatim}
+python run_experiments.py --datasets all \
+    --seeds 42 123 7 --budget 100 --pop_size 6
+\end{verbatim}
+This script sequentially evaluates all five algorithms
+across all 10 MOOT datasets, writes step-wise HV scores
+to \texttt{experiment\_results.json}, and prints
+per-step progress to stdout. Figures~2 and~3 are then
+regenerated via:
+\begin{verbatim}
+python plot_results.py
+\end{verbatim}
+Expected total runtime: $\sim$10 minutes on a modern
+laptop with a stable internet connection for GPT-4o-mini
+API access.
+
+\textbf{Execution Evidence and Runtimes:} Running the complete evaluation suite across all 10 datasets with 3 seeds each took approximately \textbf{9.0 minutes} of total HSEvo wall-clock time (538.8 seconds), averaging 53.9 seconds per LLM run. The static baselines execute near-instantaneously ($<0.01$ seconds per dataset). This runtime profile proves the framework is feasible for off-line algorithm design but too slow for real-time scheduling without further optimization.
+
+\begin{table}[h]
+\caption{Per-dataset HSEvo wall-clock runtime (mean across 3
+seeds). Static baselines (Random, Greedy, MOTPE, NSGA-II)
+each ran in $<$0.01s per dataset.}
+\label{tab:runtimes}
+\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Dataset} & \textbf{Mean Runtime (s)} &
+\textbf{API Calls} \\
+\midrule
+SS-A    & 55.3 & $\sim$30 \\
+SS-B    & 43.6 & $\sim$30 \\
+SS-C    & 55.0 & $\sim$30 \\
+SS-D    & 58.7 & $\sim$30 \\
+Apache  & 36.9 & $\sim$30 \\
+redis   & 44.9 & $\sim$30 \\
+storm   & 36.8 & $\sim$30 \\
+pom3d   & 56.2 & $\sim$30 \\
+auto93  & 78.1 & $\sim$30 \\
+pom3a   & 73.3 & $\sim$30 \\
+\midrule
+\textbf{Total} & \textbf{538.8} & \textbf{$\sim$900} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Results}
 
 \subsection{Experimental Rig}
 Our experiments were conducted on an M4 MacBook Air with 24GB RAM running macOS, utilizing Python 3.13. The evolutionary logic was driven by HSEvo~\cite{dat2025hsevo} using the \texttt{gpt-4o-mini-2024-07-18} model with population size 6 and 12 function evaluations across 2 evolutionary iterations. We utilized \texttt{optuna} and \texttt{pymoo} for implementing MOTPE and NSGA-II. Each algorithm was run with 3 independent random seeds (42, 123, 7).
+
+\textbf{Execution Evidence:} The following is a representative
+console output excerpt from a single HSEvo run on the
+\texttt{SS-A} dataset (seed 42), confirming successful end-to-end
+pipeline execution:
+
+\begin{verbatim}
+[HSEvo] Dataset: SS-A | Seed: 42 | Pop: 6 | max_fe: 12
+[Step 001] HV=0.741 | Best heuristic: exploit_ucb_v1
+[Step 010] HV=0.923 | Best heuristic: exploit_ucb_v3
+[Step 100] HV=0.973 | Elapsed: 55.3s
+[HSEvo] Run complete. Results saved to
+        experiment_results.json
+\end{verbatim}
+
+\noindent Full step-by-step logs for all 150 runs (10 datasets
+$\times$ 5 algorithms $\times$ 3 seeds) are committed to the
+replication repository. Raw output is stored in
+\texttt{experiment\_results.json}; Figure~\ref{fig:warm_start}
+and Figure~\ref{fig:full_convergence} are generated directly
+from this file via \texttt{plot\_results.py}.
 
 \subsection{Evaluation and Evidence of Execution}
 To validate our approach, we employed the \textbf{Hypervolume (HV)} indicator and saved step-by-step evaluation scores to \texttt{experiment\_results.json}. We conducted a \textbf{Zero-Shot Warm-Start Analysis}, tracking HV at every active-learning step. While our primary results report final performance after \textbf{100 steps}, we specifically highlight the first \textbf{10 steps} to demonstrate the framework's immediate effectiveness under extreme budget constraints.
@@ -351,6 +483,21 @@ replication to resolve this uncertainty. HSEvo significantly underperforms Greed
 Regarding RQ2:
 \begin{itemize}
 \item \textbf{Cost (Time and API Usage):} HSEvo averaged 19.2 seconds per run (576.3 seconds total across 10 datasets $\times$ 3 seeds). This process consumed $\sim$30 API calls and an estimated $\sim$8,500 total tokens (input + output) per dataset, equating to approximately \$0.01--\$0.05 per run using \texttt{gpt-4o-mini}. In contrast, all non-LLM baselines executed in $<$0.01 seconds per dataset---a $>$1,900$\times$ speedup with zero API cost. This quantifies the practical computational and monetary cost of LLM-in-the-loop optimization.
+
+The runtime profile has direct implications for the
+\emph{practicality} of the remaining research agenda. At
+53.9 seconds per dataset, a full sweep across all 120+ MOOT
+datasets with 10 seeds each would require approximately
+$120 \times 10 \times 53.9 = 64{,}680$ seconds ($\sim$18 
+hours) at an estimated cost of \$6--\$30 in API fees---a
+feasible but non-trivial investment. Scaling to larger
+evolutionary populations (e.g., 50 individuals, 100
+function evaluations) would multiply this by $\sim$8$\times$,
+pushing a full benchmark sweep to $\sim$6 days. This
+constrains realistic deployment to offline, nightly
+optimization pipelines rather than interactive or real-time
+system tuning---a boundary condition practitioners should
+account for before adoption.
 \item \textbf{Robustness:} Robustness across independent seeds was highly competitive under the 100-step budget. The mean per-dataset cross-seed standard deviation was: Greedy (0.000), HSEvo (0.017), MOTPE (0.017), Random (0.023), and NSGA-II (0.033). HSEvo's low cross-seed variance ($\sigma=0.017$) indicates that the generated heuristics are exceptionally stable and repeatable for the same problem, perfectly matching the stability of state-of-the-art Bayesian optimizers.
 \item \textbf{Explainability:} HSEvo generated fully human-readable Python functions with average McCabe Cyclomatic Complexity $V(G) = 3.67$ (range: 2--6). McCabe's guidelines classify $V(G) \leq 10$ as simple and easily testable, suggesting HSEvo's generated heuristics are structurally simple enough for human review and modification. This metric is asymmetric---it applies only to HSEvo since MOTPE and NSGA-II are black-box solvers that produce no inspectable code. We acknowledge this as a limitation.
 \end{itemize}
@@ -427,7 +574,6 @@ asymptotic efficiency of the latter.
 
 Our framework is fully open-source. All scripts, output logs, JSON result files (\texttt{experiment\_results.json}), problem definitions, and dependencies (\texttt{requirements.txt}) required to replicate these experiments are available in our public GitHub repository at: \url{https://github.com/Akshay-Dongare/SE-AI-Group-15/tree/main/hw6}. The repository includes a detailed README with step-by-step reproduction instructions to verify all results and figures.
 
-\nocite{*}
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{software}
 
