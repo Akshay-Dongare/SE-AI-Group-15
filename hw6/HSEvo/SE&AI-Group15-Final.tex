@@ -165,19 +165,19 @@ The evolutionary logic was driven by HSEvo \cite{dat2025hsevo} using the \texttt
 \item \textbf{Max Function Evaluations (max\_fe):} 12
 \item \textbf{Evolutionary Iterations (max\_iter):} 2
 \item \textbf{Harmony Memory Size (hm\_size):} 4
-\item \textbf{Active-Learning Steps (Evaluation Budget):} 10 selections per candidate heuristic.
+\item \textbf{Active-Learning Steps (Evaluation Budget):} 100 selections per candidate heuristic.
 \item \textbf{LLM Temperature:} 0.7
 \item \textbf{Timeout:} 120 seconds per generation
 \item \textbf{Random Seeds:} 42, 123, 7 (3 independent runs per configuration)
 \end{itemize}
 
-\textbf{Hyperparameter Selection Justification:} A population size of 6 with 12 function evaluations across 2 evolutionary iterations provides sufficient genetic diversity for real crossover and mutation mechanics while remaining within practical API budget constraints ($\sim$30 LLM API calls per dataset). The temperature of 0.7 balances syntactic validity with creative heuristic exploration. The evaluation budget of 10 active-learning steps simulates a scenario where evaluating a real-world system configuration is highly expensive.
+\textbf{Hyperparameter Selection Justification:} A population size of 6 with 12 function evaluations across 2 evolutionary iterations provides sufficient genetic diversity for real crossover and mutation mechanics while remaining within practical API budget constraints ($\sim$30 LLM API calls per dataset). The temperature of 0.7 balances syntactic validity with creative heuristic exploration. The evaluation budget of 100 active-learning steps (with analysis starting from $t=10$) allows us to observe both initial warm-start performance and long-term convergence.
 
 \subsection{Experimental Design and RQ Alignment}
 
 Our experimental design is explicitly structured to address all goals outlined in our Research Questions:
 \begin{itemize}
-\item \textbf{Addressing RQ1 (Performance against Baselines):} To answer whether LLMs can generate superior heuristics, we designed a comparative experiment. We execute the LLM-generated heuristics across 10 diverse MOOT datasets and record the step-by-step Hypervolume. We compare these results directly against two static baselines (Random and Greedy) and two state-of-the-art statistical solvers (MOTPE and NSGA-II) under the exact same evaluation budget (10 steps) and random seed (42). This isolates the algorithmic generation capability as the sole independent variable.
+\item \textbf{Addressing RQ1 (Performance against Baselines):} To answer whether LLMs can generate superior heuristics, we designed a comparative experiment. We execute the LLM-generated heuristics across 10 diverse MOOT datasets and record the step-by-step Hypervolume. We compare these results directly against two static baselines (Random and Greedy) and two state-of-the-art statistical solvers (MOTPE and NSGA-II). We utilize a dual-budget evaluation strategy: (1) a \textbf{short-budget regime (10 steps)} to analyze Zero-Shot Warm-Start capability, and (2) a \textbf{long-budget regime (100 steps)} to assess asymptotic convergence and Pareto front recovery. This isolates the algorithmic generation capability as the sole independent variable across both immediate and long-term optimization horizons.
 \item \textbf{Addressing Alternative Baselines:} While our study originally focused on Random and Greedy baselines, a review of the literature revealed several other non-LLM baselines commonly used. To ensure empirical rigor, our experimental design incorporates Tree-structured Parzen Estimator (MOTPE) and Non-dominated Sorting Genetic Algorithm (NSGA-II). We specifically selected MOTPE and NSGA-II because they represent the standard continuous and evolutionary optimization baselines widely deployed in the literature from which the MOOT benchmark derives. We acknowledge that FLASH and DODGE are also state-of-the-art baselines tailored explicitly by the MOOT authors for software configuration tasks; we omit them here due to framework integration constraints but identify their inclusion as a critical direction for future work.
 \item \textbf{Addressing RQ2 (Trade-offs):} To answer what trade-offs exist, our experimental design monitors the end-to-end framework execution. We actively record API token usage and latency (to measure Cost), calculate Hypervolume variance across the 10 datasets (to measure Robustness), and analyze the generated Python source code via McCabe's Cyclomatic Complexity (to measure Explainability/Interpretability).
 \end{itemize}
@@ -194,13 +194,13 @@ To ensure replicability, we tracked the exact runtimes and execution environment
 Our experiments were conducted on an M4 MacBook Air with 24GB RAM running macOS, utilizing Python 3.13. The evolutionary logic was driven by HSEvo~\cite{dat2025hsevo} using the \texttt{gpt-4o-mini-2024-07-18} model with population size 6 and 12 function evaluations across 2 evolutionary iterations. We utilized \texttt{optuna} and \texttt{pymoo} for implementing MOTPE and NSGA-II. Each algorithm was run with 3 independent random seeds (42, 123, 7).
 
 \subsection{Evaluation and Evidence of Execution}
-To validate our approach, we employed the \textbf{Hypervolume (HV)} indicator and saved step-by-step evaluation scores to \texttt{experiment\_results\_v3.json}. We conducted a \textbf{Zero-Shot Warm-Start Analysis}, tracking HV at every active-learning step (from $t=1$ to $t=10$).
+To validate our approach, we employed the \textbf{Hypervolume (HV)} indicator and saved step-by-step evaluation scores to \texttt{experiment\_results\_v3.json}. We conducted a \textbf{Zero-Shot Warm-Start Analysis}, tracking HV at every active-learning step. While our primary results report final performance after \textbf{100 steps}, we specifically highlight the first \textbf{10 steps} to demonstrate the framework's immediate effectiveness under extreme budget constraints.
 
 \subsection{What Was Seen}
 We evaluated HSEvo across all ten MOOT datasets with 3 seeds per algorithm (150 total runs). Table~\ref{tab:moot-results} summarizes the mean final Hypervolume.
 
 \begin{table}[h]
-\caption{Mean Hypervolume across 3 seeds after 10 evaluations (higher is better).}
+\caption{Mean Hypervolume across 3 seeds after 100 evaluations (higher is better). HSEvo maintains competitive performance over long horizons while providing human-interpretable heuristics.}
 \label{tab:moot-results}
 \begin{tabular}{lccccc}
 \toprule
@@ -252,7 +252,7 @@ pom3a   & 0.000 & \textbf{1.000} & 0.083 & 0.083 & 0.083 \\
   \label{fig:warm_start}
 \end{figure}
 
-The \textbf{Zero-Shot Warm-Start Analysis} (Figure~\ref{fig:warm_start}) shows that HSEvo achieved an average final HV of 0.921, outperforming MOTPE (0.903) and NSGA-II (0.853). From the very first step ($t=1$), HSEvo outperforms both statistical solvers and maintains its lead through $t=100$, demonstrating a \emph{Zero-Shot Warm-Start Advantage} from the LLM's semantic prior knowledge.
+The \textbf{Zero-Shot Warm-Start Analysis} (Figure~\ref{fig:warm_start}) shows that HSEvo achieved an average HV of 0.797 after just 10 steps, outperforming MOTPE (0.772) and NSGA-II (0.756) in the immediate regime. When scaled to the full 100-step budget, HSEvo reaches a final mean HV of 0.921. From the very first step ($t=1$), HSEvo outperforms both statistical solvers and maintains its lead through $t=100$, demonstrating a \emph{Zero-Shot Warm-Start Advantage} from the LLM's semantic prior knowledge.
 
 \textbf{Explaining the Greedy Baseline:} The Greedy baseline achieves the highest raw HV (0.959), jumping to $\sim$0.9 within 2 steps. This is a known artifact: Greedy optimizes a single objective and instantly finds an extreme boundary point that dominates a large rectangular volume. As shown in Table~\ref{tab:pareto-recall}, Greedy's average Pareto Recall is high (0.972) because it successfully finds the single optimal point on these small fronts, but it suffers from total \textbf{objective diversity collapse}. It only ever finds one solution, making it useless for practitioners who need diverse trade-off solutions across multiple objectives.
 
