@@ -21,7 +21,12 @@
 \begin{document}
 
 \begin{abstract}
-Modern software systems rely on complex coordination logic across interacting components, yet such logic is often manually designed, brittle, and difficult to optimize. This paper explores whether large language models (LLMs), embedded within evolutionary frameworks, can automatically generate and improve active-learning configuration heuristics for system-level architectures. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate HSEvo, an evolutionary LLM framework that uses genetic operators to iteratively generate and improve Python heuristic functions via LLM prompting, on the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, matching the performance of state-of-the-art statistical solvers (MOTPE) and losing only to Greedy baselines on raw Hypervolume due to the latter's objective diversity collapse. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
+Manually tuning the configuration of complex software systems is
+costly, brittle, and difficult to scale. This paper explores whether
+large language models (LLMs), embedded within evolutionary frameworks,
+can automatically generate active-learning heuristics that select
+informative configurations for multi-objective software engineering
+optimization tasks. We conduct a structured literature analysis to identify gaps in current research, revealing a lack of work at the intersection of evolutionary search, algorithm generation, and system-level optimization. To investigate this gap, we evaluate HSEvo, an evolutionary LLM framework that uses genetic operators to iteratively generate and improve Python heuristic functions via LLM prompting, on the MOOT (Multi-Objective Optimization Tasks) benchmark. Our results demonstrate that LLM-driven evolutionary approaches can generate effective heuristics, matching the performance of state-of-the-art statistical solvers (MOTPE) and losing only to Greedy baselines on raw Hypervolume due to the latter's objective diversity collapse. We discuss trade-offs in cost, interpretability, and solution diversity, and outline explicit threats to validity and directions for future work.
 \end{abstract}
 
 \maketitle
@@ -30,7 +35,6 @@ Modern software systems rely on complex coordination logic across interacting co
 
 \textbf{Problem Statement and Validity:} The problem addressed in this paper is the high cost, brittleness, and poor scalability of manually tuning system coordination logic. As modern software systems (e.g., cloud microservices, multi-agent workflows) grow in complexity, hand-crafted static algorithms fail to adapt to dynamic workloads, shifting data distributions, and massive configuration spaces. The validity of this problem is empirically supported: Jamshidi et al.\ found that configuration spaces for real-world systems like Apache and Redis contain thousands of interacting parameters, with manual tuning achieving only 60--70\% of optimal performance~\cite{menzies2024moot}. The MOOT benchmark itself was constructed precisely because these manual approaches fail at scale, motivating automated configuration optimization as a first-class SE research problem. Therefore, there is a critical, validated need for automated approaches to generate adaptive coordination heuristics.
 
-Modern software engineering is characterized by complex systems composed of interacting components such as multi-agent LLM workflows and cloud microservices. These systems require coordination logic that determines how components interact, route tasks, and allocate resources. While flexible architectures allow many design choices, they introduce a large space of algorithmic parameters and routing heuristics that must be tuned.
 
 Recent work has explored the use of large language models (LLMs) for optimization tasks \cite{romera2023mathematical}. However, most approaches focus on generating solutions or tuning parameters rather than evolving the underlying algorithms themselves. This paper explores whether LLMs embedded within evolutionary frameworks can generate and optimize coordination strategies across real-world software engineering optimization tasks.
 
@@ -242,7 +246,7 @@ to its operationalization in our experimental design.
 \textbf{Table} \\
 \midrule
 RQ1: Superior heuristics? & Hypervolume (HV) & HSEvo vs.\
-Random, Greedy, MOTPE, NSGA-II & Table~2 \\
+Random, Greedy, MOTPE, NSGA-II & Table~\ref{tab:moot-results} \\
 RQ1: Early advantage? & HV at $t=10$ (Warm-Start) &
 HSEvo vs.\ statistical solvers & Figure~2 \\
 RQ1: Long-horizon? & HV at $t=100$ & All algorithms,
@@ -398,7 +402,7 @@ pom3a   & 0.000 & \textbf{1.000} & 0.083 & 0.083 & 0.083 \\
 
 The \textbf{Zero-Shot Warm-Start Analysis} (Figure~\ref{fig:warm_start}) shows that HSEvo achieved an average HV of 0.797 after just 10 steps, outperforming MOTPE (0.772) and NSGA-II (0.756) in the immediate regime. When scaled to the full 100-step budget, HSEvo reaches a final mean HV of 0.921. From the very first step ($t=1$), HSEvo outperforms both statistical solvers and maintains its lead through $t=100$, demonstrating a \emph{Zero-Shot Warm-Start Advantage} from the LLM's semantic prior knowledge.
 
-Figure 3 extends the warm-start analysis to the full 100-step budget,
+Figure~\ref{fig:full_convergence} extends the warm-start analysis to the full 100-step budget,
 revealing long-horizon convergence across all five algorithms. HSEvo
 maintains its lead over MOTPE and NSGA-II throughout, with the
 performance gap narrowing after $t = 40$ as Bayesian surrogates
@@ -545,7 +549,7 @@ Several research directions emerge from this work:
 
 \textbf{(1) Scaling the Evolutionary Budget.} Our population size of 6 with 12 function evaluations represents a modest evolutionary regime. Scaling to populations of 20--50 with 100+ evaluations would enable richer genetic diversity, more meaningful crossover and mutation, and likely substantially higher final HV. The key research question is whether the marginal HV improvement justifies the linear increase in API cost.
 
-\textbf{(2) Local LLMs for Cost Reduction.} Replacing cloud-hosted GPT-4o-mini with locally-deployed models (e.g., CodeLlama-7B, DeepSeek-Coder) could eliminate the 19.2-second API latency bottleneck entirely. This would enable real-time heuristic generation at the cost of potentially lower code quality. A systematic study comparing code quality vs.\ model size would provide practitioners with actionable deployment guidelines.
+\textbf{(2) Local LLMs for Cost Reduction.} Replacing cloud-hosted GPT-4o-mini with locally-deployed models (e.g., CodeLlama-7B, DeepSeek-Coder) could eliminate the 53.9-second API latency bottleneck entirely. This would enable real-time heuristic generation at the cost of potentially lower code quality. A systematic study comparing code quality vs.\ model size would provide practitioners with actionable deployment guidelines.
 
 \textbf{(3) Multi-Fidelity Active Learning.} The current framework treats all configuration evaluations as equally expensive. In practice, system evaluations have heterogeneous costs (e.g., a 10-minute load test vs.\ a 1-second cache probe). Extending the LLM-generated heuristics to reason about evaluation cost alongside information gain would bridge the gap between our static benchmark evaluation and real-world deployment.
 
