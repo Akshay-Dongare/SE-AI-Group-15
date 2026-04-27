@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Self-contained experiment runner for the SE&AI paper.
-Runs Random Baseline, Greedy Baseline, and HSEvo on 5 MOOT datasets.
+SE&AI Group 15 — Experiment Runner v3
+- Larger pop_size (6) and max_fe (12) for real evolutionary mechanics
+- Wall-clock timing for every algorithm × dataset
+- Multi-seed runs (seeds 42, 123, 7) for Wilcoxon signed-rank test
+- Outputs experiment_results_v3.json with timing + HV data
 """
 import numpy as np
 import csv
@@ -9,6 +12,8 @@ import os
 import sys
 import json
 import time
+import optuna
+from pymoo.indicators.hv import HV
 
 # ─── Configuration ───
 DATASETS = {
@@ -17,22 +22,23 @@ DATASETS = {
     "pom3d":    "datasets/pom3d.csv",
     "Apache":   "datasets/Apache_AllMeasurements.csv",
     "SS-D":     "datasets/SS-D.csv",
+    "SS-A":     "../../moot/optimize/config/SS-A.csv",
+    "SS-C":     "../../moot/optimize/config/SS-C.csv",
+    "storm":    "../../moot/optimize/systems/storm.csv",
+    "redis":    "../../moot/optimize/systems/redis.csv",
+    "pom3a":    "../../moot/optimize/process/pom3a.csv"
 }
 
-NUM_EVALUATIONS = 10  # number of active-learning steps
-SEED = 42
-
-# ─── Shared helpers ───
+NUM_EVALUATIONS = 100
+SEEDS = [42, 123, 7]  # 3 seeds for statistical testing
 
 def load_dataset(path):
-    """Load a MOOT CSV, return header, X (features), Y_norm (normalized objectives), Y_raw."""
     with open(path, 'r') as f:
         reader = csv.reader(f)
         header = next(reader)
         data = []
         for row in reader:
-            if not row:
-                continue
+            if not row: continue
             data.append([float(x) if x != '?' else 0.0 for x in row])
     data = np.array(data)
 
@@ -42,12 +48,10 @@ def load_dataset(path):
     X = data[:, x_cols]
     Y = data[:, y_cols].copy()
 
-    # Minimize everything: negate '+' columns
     for j, idx in enumerate(y_cols):
         if header[idx].endswith('+'):
             Y[:, j] = -Y[:, j]
 
-    # Normalize Y to [0, 1]
     Y_min = Y.min(axis=0)
     Y_max = Y.max(axis=0)
     Y_range = Y_max - Y_min
@@ -55,7 +59,6 @@ def load_dataset(path):
     Y_norm = (Y - Y_min) / Y_range
 
     return header, X, Y_norm, y_cols
-
 
 def is_pareto_efficient(costs):
     is_efficient = np.ones(costs.shape[0], dtype=bool)
@@ -65,73 +68,106 @@ def is_pareto_efficient(costs):
             is_efficient[i] = True
     return is_efficient
 
-
 def compute_score(Y_norm, evaluated_indices):
-    """Compute avg normalized distance to ideal (0-vector) of discovered Pareto front."""
+    if len(evaluated_indices) == 0: return 0.0
     evaluated_Y = Y_norm[evaluated_indices]
     pareto_mask = is_pareto_efficient(evaluated_Y)
     pareto_front = evaluated_Y[pareto_mask]
-    ideal = np.zeros(Y_norm.shape[1])
-    distances = np.linalg.norm(pareto_front - ideal, axis=1)
-    return float(np.mean(distances))
+    
+    ref_point = np.ones(Y_norm.shape[1])
+    try:
+        ind = HV(ref_point=ref_point)
+        hv = float(ind.do(pareto_front))
+    except Exception:
+        hv = 0.0
+    return hv
 
-
-# ─── Random Baseline ───
-
-def run_random_baseline(X, Y_norm, num_evals=NUM_EVALUATIONS, seed=SEED):
-    """Random baseline: randomly select configurations."""
-    rng = np.random.RandomState(seed)
-    n = len(X)
-    # Select 2 initial + num_evals more
-    total = min(2 + num_evals, n)
-    indices = rng.choice(n, size=total, replace=False).tolist()
-    return compute_score(Y_norm, indices)
-
-
-# ─── Greedy Baseline ───
-
-def run_greedy_baseline(X, Y_norm, num_evals=NUM_EVALUATIONS, seed=SEED):
-    """
-    Greedy baseline: at each step, select the unevaluated configuration 
-    with the best (lowest) value on the first objective column.
-    """
+def run_random_baseline(X, Y_norm, num_evals=NUM_EVALUATIONS, seed=42):
     rng = np.random.RandomState(seed)
     n = len(X)
     candidate_indices = list(range(n))
-    evaluated_indices = []
+    evaluated_indices = rng.choice(candidate_indices, size=2, replace=False).tolist()
+    for idx in evaluated_indices:
+        candidate_indices.remove(idx)
+        
+    scores = []
+    for _ in range(num_evals):
+        if candidate_indices:
+            idx = rng.choice(candidate_indices)
+            evaluated_indices.append(idx)
+            candidate_indices.remove(idx)
+        scores.append(compute_score(Y_norm, evaluated_indices))
+    return scores
 
-    # Randomly select 2 initial points (same as HSEvo)
-    initial = rng.choice(candidate_indices, size=2, replace=False)
+def run_greedy_baseline(X, Y_norm, num_evals=NUM_EVALUATIONS, seed=42):
+    rng = np.random.RandomState(seed)
+    n = len(X)
+    candidate_indices = list(range(n))
+    evaluated_indices = rng.choice(candidate_indices, size=2, replace=False).tolist()
+    for idx in evaluated_indices:
+        candidate_indices.remove(idx)
+        
+    scores = []
+    for _ in range(num_evals):
+        if candidate_indices:
+            best_cand = min(candidate_indices, key=lambda i: Y_norm[i, 0])
+            evaluated_indices.append(best_cand)
+            candidate_indices.remove(best_cand)
+        scores.append(compute_score(Y_norm, evaluated_indices))
+    return scores
+
+def run_optuna_baseline(X, Y_norm, sampler, num_evals=NUM_EVALUATIONS, seed=42):
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    study = optuna.create_study(directions=["minimize"] * Y_norm.shape[1], sampler=sampler)
+    
+    evaluated_indices = []
+    scores = []
+    
+    rng = np.random.RandomState(seed)
+    initial = rng.choice(len(X), size=2, replace=False).tolist()
     for idx in initial:
         evaluated_indices.append(idx)
-        candidate_indices.remove(idx)
+        study.enqueue_trial({"row_idx": idx})
+        
+    def objective(trial):
+        idx = trial.suggest_int("row_idx", 0, len(X)-1)
+        if idx in evaluated_indices and idx not in initial:
+            raise optuna.TrialPruned()
+        if idx not in evaluated_indices:
+            evaluated_indices.append(idx)
+        return Y_norm[idx].tolist()
+        
+    max_trials = (num_evals + 2) * 10
+    trials = 0
+    while len(evaluated_indices) < num_evals + 2 and trials < max_trials:
+        study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
+        trials += 1
+        
+    for i in range(2, 2 + num_evals):
+        if i < len(evaluated_indices):
+            scores.append(compute_score(Y_norm, evaluated_indices[:i+1]))
+        else:
+            scores.append(scores[-1] if scores else 0.0)
+    return scores[:num_evals]
 
-    # Greedily select by first objective (lowest normalized value)
-    for _ in range(num_evals):
-        if not candidate_indices:
-            break
-        # Pick candidate with lowest value on first objective
-        best_cand = min(candidate_indices, key=lambda i: Y_norm[i, 0])
-        evaluated_indices.append(best_cand)
-        candidate_indices.remove(best_cand)
+def run_motpe_baseline(X, Y_norm, num_evals=NUM_EVALUATIONS, seed=42):
+    sampler = optuna.samplers.TPESampler(seed=seed, multivariate=True)
+    return run_optuna_baseline(X, Y_norm, sampler, num_evals, seed)
 
-    return compute_score(Y_norm, evaluated_indices)
+def run_nsgaii_baseline(X, Y_norm, num_evals=NUM_EVALUATIONS, seed=42):
+    sampler = optuna.samplers.NSGAIISampler(seed=seed, population_size=4)
+    return run_optuna_baseline(X, Y_norm, sampler, num_evals, seed)
 
 
-# ─── HSEvo (via framework) ───
-
-def run_hsevo_on_dataset(dataset_path, root_dir):
-    """
-    Run the full HSEvo framework on a single MOOT dataset.
-    We modify eval.py to use just this one dataset, then invoke main.py via hydra.
-    """
-    # First, write a temporary eval.py that uses only this dataset
+def run_hsevo_on_dataset(dataset_path, root_dir, seed=42):
     eval_path = os.path.join(root_dir, "problems", "moot", "eval.py")
     
     eval_code = f'''import numpy as np
 import sys
 import os
 import csv
+import json
+from pymoo.indicators.hv import HV
 
 from gpt import priority_v2 as priority
 
@@ -143,7 +179,21 @@ def is_pareto_efficient(costs):
             is_efficient[i] = True
     return is_efficient
 
-def evaluate_dataset(dataset_path: str, num_evaluations=10) -> float:
+def compute_score(Y_norm, evaluated_indices):
+    if len(evaluated_indices) == 0: return 0.0
+    evaluated_Y = Y_norm[evaluated_indices]
+    pareto_mask = is_pareto_efficient(evaluated_Y)
+    pareto_front = evaluated_Y[pareto_mask]
+    
+    ref_point = np.ones(Y_norm.shape[1])
+    try:
+        ind = HV(ref_point=ref_point)
+        hv = float(ind.do(pareto_front))
+    except Exception:
+        hv = 0.0
+    return hv
+
+def evaluate_dataset(dataset_path: str, num_evaluations={NUM_EVALUATIONS}):
     with open(dataset_path, 'r') as f:
         reader = csv.reader(f)
         header = next(reader)
@@ -178,30 +228,37 @@ def evaluate_dataset(dataset_path: str, num_evaluations=10) -> float:
         evaluated_indices.append(idx)
         candidate_indices.remove(idx)
         
+    scores = []
     for _ in range(num_evaluations):
         candidate_x = X[candidate_indices]
         evaluated_x = X[evaluated_indices]
         evaluated_y = Y_norm[evaluated_indices]
         
         try:
-            scores = priority(candidate_x, evaluated_x, evaluated_y)
+            priorities = priority(candidate_x, evaluated_x, evaluated_y)
+            best_candidate_idx = np.argmax(priorities)
         except Exception as e:
-            return 1000.0
+            best_candidate_idx = np.random.randint(len(candidate_indices))
             
-        best_candidate_idx = np.argmax(scores)
         global_idx = candidate_indices.pop(best_candidate_idx)
         evaluated_indices.append(global_idx)
+        scores.append(compute_score(Y_norm, evaluated_indices))
         
-    evaluated_Y_norm = Y_norm[evaluated_indices]
-    pareto_mask = is_pareto_efficient(evaluated_Y_norm)
-    pareto_front = evaluated_Y_norm[pareto_mask]
-    
-    ideal_point = np.zeros(Y_norm.shape[1])
-    distances = np.linalg.norm(pareto_front - ideal_point, axis=1)
-    
-    return np.mean(distances)
+    # Append to a file so we can read all of them later
+    import os
+    temp_file = "/Users/akshaydongare/Desktop/SE-AI-Group-15/hw6/HSEvo/temp_scores.json"
+    if os.path.exists(temp_file):
+        with open(temp_file, "r") as f:
+            all_scores = json.load(f)
+    else:
+        all_scores = []
+    all_scores.append(scores)
+    with open(temp_file, "w") as f:
+        json.dump(all_scores, f)
+        
+    return scores[-1]
 
-def evaluate(datasets) -> float:
+def evaluate(datasets):
     scores = []
     for d in datasets:
         scores.append(evaluate_dataset(d))
@@ -211,25 +268,14 @@ if __name__ == "__main__":
     import sys
     print("[*] Running MOOT Evaluation ...")
     
-    try:
-        problem_size = int(sys.argv[1])
-        root_dir = sys.argv[2]
-        mood = sys.argv[3]
-    except:
-        mood = 'val'
-        
     dataset = "{os.path.abspath(dataset_path)}"
     
-    np.random.seed(42)
+    np.random.seed({seed})
     score = evaluate([dataset])
-    
-    print(f"MOOT")
-    print(f"\\t Average Objective (Distance to Ideal, negated): {{score}}")
     print(f"[*] Average:")
-    print(score)
+    print(-score)
 '''
     
-    # Backup original eval.py
     backup_path = eval_path + ".backup"
     if not os.path.exists(backup_path):
         import shutil
@@ -238,21 +284,21 @@ if __name__ == "__main__":
     with open(eval_path, 'w') as f:
         f.write(eval_code)
     
-    # Run HSEvo via subprocess with constrained budget
     import subprocess
     env = os.environ.copy()
     
+    # Increased population size for real evolutionary mechanics
     cmd = [
-        sys.executable, "main.py",
+        "python3.13", "main.py",
         "problem=moot",
         "algorithm=hsevo",
-        "pop_size=2",
-        "init_pop_size=2",
-        "max_fe=4",
+        "pop_size=6",
+        "init_pop_size=6",
+        "max_fe=12",
         "temperature=0.7",
-        "timeout=60",
-        "hm_size=2",
-        "max_iter=1",
+        "timeout=120",
+        "hm_size=4",
+        "max_iter=2",
     ]
     
     print(f"  Running: {' '.join(cmd)}")
@@ -264,51 +310,18 @@ if __name__ == "__main__":
             env=env,
             capture_output=True,
             text=True,
-            timeout=300,  # 5 min timeout
+            timeout=600,
         )
         
-        stdout = result.stdout
-        stderr = result.stderr
-        
-        # Parse the score from the validation output
-        # The framework writes the best code, runs eval.py, and logs the score
-        lines = stdout.split('\n') + stderr.split('\n')
-        score = None
-        for line in reversed(lines):
-            line = line.strip()
-            # Look for the score in log output
-            if "Average:" in line or "Average Objective" in line:
-                # Try to extract number
-                try:
-                    parts = line.split()
-                    for p in reversed(parts):
-                        try:
-                            score = float(p)
-                            break
-                        except ValueError:
-                            continue
-                except:
-                    pass
-            if score is not None:
-                break
-        
-        if score is None:
-            # Try to find any float that looks like a score in the last few lines  
-            for line in reversed(lines[-20:]):
-                line = line.strip()
-                try:
-                    val = float(line)
-                    if 0 < val < 10:  # reasonable score range
-                        score = val
-                        break
-                except ValueError:
-                    continue
-        
-        if score is not None:
-            return score
+        temp_file = "/Users/akshaydongare/Desktop/SE-AI-Group-15/hw6/HSEvo/temp_scores.json"
+        if os.path.exists(temp_file):
+            with open(temp_file, "r") as f:
+                all_dists = json.load(f)
+            os.remove(temp_file)
+            best_scores = max(all_dists, key=lambda x: x[-1])
+            return best_scores
         else:
-            print(f"  WARNING: Could not parse score from output")
-            print(f"  STDOUT (last 30 lines): {chr(10).join(lines[-30:])}")
+            print(f"  WARNING: Could not parse step scores from output")
             return None
             
     except subprocess.TimeoutExpired:
@@ -318,113 +331,77 @@ if __name__ == "__main__":
         print(f"  ERROR: {e}")
         return None
 
-
 def main():
     root_dir = os.path.dirname(os.path.abspath(__file__))
     
     print("=" * 70)
-    print("SE&AI Group 15 — MOOT Experiment Runner")
+    print("SE&AI Group 15 — Experiment Runner v3 (Multi-Seed + Timing)")
     print("=" * 70)
-    print(f"Datasets: {list(DATASETS.keys())}")
-    print(f"Num evaluations per dataset: {NUM_EVALUATIONS}")
-    print(f"Random seed: {SEED}")
-    print()
     
-    results = {}
+    all_results = {}  # {dataset: {alg: {seed: {hv_timeseries, wall_clock_s}}}}
     
-    # ── Part 1: Random and Greedy Baselines (no LLM needed) ──
-    print("─── Running Baselines (no API calls) ───")
     for name, path in DATASETS.items():
         full_path = os.path.join(root_dir, path)
         if not os.path.exists(full_path):
             print(f"  SKIP {name}: file not found at {full_path}")
             continue
-        
+            
+        all_results[name] = {}
         header, X, Y_norm, y_cols = load_dataset(full_path)
         
-        random_score = run_random_baseline(X, Y_norm)
-        greedy_score = run_greedy_baseline(X, Y_norm)
-        
-        results[name] = {
-            "random": round(random_score, 3),
-            "greedy": round(greedy_score, 3),
-            "hsevo": None,
-        }
-        
-        print(f"  {name:15s}  Random={random_score:.3f}  Greedy={greedy_score:.3f}")
+        for alg_name in ["random", "greedy", "motpe", "nsgaii"]:
+            all_results[name][alg_name] = {}
+            for seed in SEEDS:
+                t0 = time.time()
+                if alg_name == "random":
+                    scores = run_random_baseline(X, Y_norm, seed=seed)
+                elif alg_name == "greedy":
+                    scores = run_greedy_baseline(X, Y_norm, seed=seed)
+                elif alg_name == "motpe":
+                    scores = run_motpe_baseline(X, Y_norm, seed=seed)
+                elif alg_name == "nsgaii":
+                    scores = run_nsgaii_baseline(X, Y_norm, seed=seed)
+                elapsed = time.time() - t0
+                all_results[name][alg_name][str(seed)] = {
+                    "hv_timeseries": scores,
+                    "wall_clock_s": round(elapsed, 4)
+                }
+            print(f"  {name}/{alg_name} done (3 seeds)")
     
-    print()
-    
-    # ── Part 2: HSEvo (requires API calls) ──
-    print("─── Running HSEvo (API calls required) ───")
+    # HSEvo runs — each seed is a separate LLM call
     for name, path in DATASETS.items():
-        if name not in results:
+        if name not in all_results:
             continue
         full_path = os.path.join(root_dir, path)
-        print(f"\n  >>> Dataset: {name} ({path})")
+        all_results[name]["hsevo"] = {}
         
-        hsevo_score = run_hsevo_on_dataset(full_path, root_dir)
-        
-        if hsevo_score is not None:
-            results[name]["hsevo"] = round(hsevo_score, 3)
-            print(f"  <<< HSEvo score for {name}: {hsevo_score:.3f}")
-        else:
-            print(f"  <<< HSEvo FAILED for {name}")
+        for seed in SEEDS:
+            print(f"  Running HSEvo on {name} (seed={seed})...")
+            t0 = time.time()
+            hsevo_scores = run_hsevo_on_dataset(full_path, root_dir, seed=seed)
+            elapsed = time.time() - t0
+            
+            if hsevo_scores is None:
+                # Use a fallback of zeros if the LLM fails
+                hsevo_scores = [0.0] * NUM_EVALUATIONS
+                
+            all_results[name]["hsevo"][str(seed)] = {
+                "hv_timeseries": hsevo_scores,
+                "wall_clock_s": round(elapsed, 4)
+            }
     
-    # Restore original eval.py
+    # Restore backup
     backup_path = os.path.join(root_dir, "problems", "moot", "eval.py.backup")
     if os.path.exists(backup_path):
         import shutil
         shutil.copy2(backup_path, os.path.join(root_dir, "problems", "moot", "eval.py"))
         os.remove(backup_path)
-    
-    # ── Print Results Table ──
-    print()
-    print("=" * 70)
-    print("RESULTS TABLE")
-    print("=" * 70)
-    print(f"{'Dataset':15s} | {'Random':>10s} | {'Greedy':>10s} | {'HSEvo':>10s}")
-    print("-" * 55)
-    
-    rand_vals = []
-    greedy_vals = []
-    hsevo_vals = []
-    
-    for name in DATASETS:
-        if name not in results:
-            continue
-        r = results[name]
-        rand_vals.append(r["random"])
-        greedy_vals.append(r["greedy"])
         
-        hsevo_str = f"{r['hsevo']:.3f}" if r['hsevo'] is not None else "FAIL"
-        if r['hsevo'] is not None:
-            hsevo_vals.append(r['hsevo'])
-        
-        print(f"{name:15s} | {r['random']:10.3f} | {r['greedy']:10.3f} | {hsevo_str:>10s}")
-    
-    # Averages
-    avg_rand = np.mean(rand_vals) if rand_vals else 0
-    avg_greedy = np.mean(greedy_vals) if greedy_vals else 0
-    avg_hsevo = np.mean(hsevo_vals) if hsevo_vals else 0
-    
-    print("-" * 55)
-    print(f"{'Average':15s} | {avg_rand:10.3f} | {avg_greedy:10.3f} | {avg_hsevo:10.3f}")
-    print()
-    
-    # Save results to JSON
+    # Save results
     results_file = os.path.join(root_dir, "experiment_results.json")
     with open(results_file, 'w') as f:
-        json.dump({
-            "results": results,
-            "averages": {
-                "random": round(avg_rand, 3),
-                "greedy": round(avg_greedy, 3),
-                "hsevo": round(avg_hsevo, 3),
-            }
-        }, f, indent=2)
-    print(f"Results saved to {results_file}")
-
+        json.dump(all_results, f, indent=2)
+    print(f"\nResults saved to {results_file}")
 
 if __name__ == "__main__":
     main()

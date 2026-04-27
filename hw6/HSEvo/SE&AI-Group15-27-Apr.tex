@@ -198,7 +198,7 @@ To analyze trade-offs, we instrument the full execution pipeline and measure:
 \end{itemize}
 \subsection{Replicability and Execution Runtimes}
 
-To ensure replicability, we tracked the exact runtimes and execution environments. The experiments were executed on an M4 MacBook Air (24GB RAM) running macOS with Python 3.13. The self-contained execution script \texttt{run\_experiments\_v3.py} completely automates the evaluation pipeline.
+To ensure replicability, we tracked the exact runtimes and execution environments. The experiments were executed on an M4 MacBook Air (24GB RAM) running macOS with Python 3.13. The self-contained execution script \texttt{run\_experiments.py} completely automates the evaluation pipeline.
 
 \textbf{Execution Evidence and Runtimes:} Running the complete evaluation suite across all 10 datasets with 3 seeds each took approximately \textbf{9.6 minutes} of total HSEvo wall-clock time (576.3 seconds), averaging 19.2 seconds per LLM run. The static baselines execute near-instantaneously ($<0.01$ seconds per dataset). This runtime profile proves the framework is feasible for off-line algorithm design but too slow for real-time scheduling without further optimization.
 
@@ -208,7 +208,7 @@ To ensure replicability, we tracked the exact runtimes and execution environment
 Our experiments were conducted on an M4 MacBook Air with 24GB RAM running macOS, utilizing Python 3.13. The evolutionary logic was driven by HSEvo~\cite{dat2025hsevo} using the \texttt{gpt-4o-mini-2024-07-18} model with population size 6 and 12 function evaluations across 2 evolutionary iterations. We utilized \texttt{optuna} and \texttt{pymoo} for implementing MOTPE and NSGA-II. Each algorithm was run with 3 independent random seeds (42, 123, 7).
 
 \subsection{Evaluation and Evidence of Execution}
-To validate our approach, we employed the \textbf{Hypervolume (HV)} indicator and saved step-by-step evaluation scores to \texttt{experiment\_results\_v3.json}. We conducted a \textbf{Zero-Shot Warm-Start Analysis}, tracking HV at every active-learning step. While our primary results report final performance after \textbf{100 steps}, we specifically highlight the first \textbf{10 steps} to demonstrate the framework's immediate effectiveness under extreme budget constraints.
+To validate our approach, we employed the \textbf{Hypervolume (HV)} indicator and saved step-by-step evaluation scores to \texttt{experiment\_results.json}. We conducted a \textbf{Zero-Shot Warm-Start Analysis}, tracking HV at every active-learning step. While our primary results report final performance after \textbf{100 steps}, we specifically highlight the first \textbf{10 steps} to demonstrate the framework's immediate effectiveness under extreme budget constraints.
 
 \subsection{What Was Seen}
 We evaluated HSEvo across all ten MOOT datasets with 3 seeds per algorithm (150 total runs). Table~\ref{tab:moot-results} summarizes the mean final Hypervolume.
@@ -345,7 +345,7 @@ This paper investigated whether Large Language Models embedded within evolutiona
 
 \section{Replication Artifacts}
 
-Our framework is fully open-source. All scripts, output logs, JSON result files (\texttt{experiment\_results\_v3.json}), problem definitions, and dependencies (\texttt{requirements.txt}) required to replicate these experiments are available in our public GitHub repository at: \url{https://github.com/Akshay-Dongare/SE-AI-Group-15/tree/main/hw6}. The repository includes a detailed README with step-by-step reproduction instructions to verify all results and figures.
+Our framework is fully open-source. All scripts, output logs, JSON result files (\texttt{experiment\_results.json}), problem definitions, and dependencies (\texttt{requirements.txt}) required to replicate these experiments are available in our public GitHub repository at: \url{https://github.com/Akshay-Dongare/SE-AI-Group-15/tree/main/hw6}. The repository includes a detailed README with step-by-step reproduction instructions to verify all results and figures.
 
 \nocite{*}
 \bibliographystyle{ACM-Reference-Format}
